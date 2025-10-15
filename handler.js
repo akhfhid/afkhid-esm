@@ -538,9 +538,7 @@ global.dfail = (type, m, conn) => {
         unreg: '*YOU ARE NOT REGISTERED YET* • KETIK .regiter nama.umur UNTUK BISA MENGGUNAKAN FITUR INI\nContoh .register kairi.19',
         restrict: '*RESTRICT* • RESTRICT BELUM DINYALAKAN DICHAAT INI',
     }[type]
-    if (msg)return conn.sendMessage(m.chat, {
-        text: msg,m
-    })
+    if (msg) return conn.sendMessage(m.chat, { text: msg }, { quoted: m })
     // if (msg) return conn.reply(m.chat, msg, m)
 }
 
