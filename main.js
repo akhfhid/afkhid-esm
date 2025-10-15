@@ -259,6 +259,23 @@ global.reloadHandler = async function (restatConn) {
     }
   })
   conn.ev.on('messages.upsert', conn.handler)
+  conn.ev.on("messages.upsert", async (m) => {
+    const msg = m.messages[0];
+    if (!msg.message) return;
+    const from = msg.key.remoteJid;
+    const text =
+      msg.message?.conversation ||
+      msg.message?.extendedTextMessage?.text ||
+      msg.message?.ephemeralMessage?.message?.conversation ||
+      "";
+
+    // console.log(chalk.yellow(`[📩 Pesan Masuk dari ${from}]`), text);
+
+    if (text.toLowerCase() === "ping") {
+      await conn.sendMessage(from, { text: "test" });
+    }
+  });
+
   conn.ev.on('group-participants.update', conn.participantsUpdate)
   conn.ev.on('groups.update', conn.groupsUpdate)
   conn.ev.on('message.delete', conn.onDelete)
