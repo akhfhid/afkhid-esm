@@ -48,8 +48,8 @@
 
 #### Setup bot on your Machine
 ```bash
-$ git clone https://github.com/akhfhid/afkhidbot
-$ cd afkhidbot
+$ git clone https://github.com/akhfhid/afkhid-esm
+$ cd afkhid-esm
 $ npm i
 ```
 
