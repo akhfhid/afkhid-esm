@@ -171,7 +171,6 @@ class RVCHoloID {
 }
 
 let handler = async (m, { conn, usedPrefix, text }) => {
-  /* penggunaan: .vtr <model> (reply audio) */
   const models = Object.keys(new RVCHoloID().models);
   if (!text || !models.includes(text.toLowerCase())) {
     await conn.sendMessage(
