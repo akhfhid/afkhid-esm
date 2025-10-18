@@ -1,63 +1,68 @@
-import fetch from "node-fetch"
-import { akhfhidCDN } from '../lib/uploadFile.js'
+import axios from "axios";
 
-const handler = async (m, { text, conn }) => {
-  try {
-    if (!text && !m.quoted && !m.mtype.includes('imageMessage')) {
-      throw "Masukkan pertanyaan atau kirim gambar untuk deskripsi!\n\n*Contoh:* Siapa presiden Indonesia?";
-    }
-
-    let imgUrl = null
-
-    if (m.quoted && m.quoted.mtype === 'imageMessage') {
-      let img = await m.quoted.download()
-      if (img) {
-        img = Buffer.from(img)
-        let link = await akhfhidCDN(img)
-        if (!link) throw 'Gagal mengupload gambar'
-        imgUrl = typeof link === 'object' ? link.url : link
-      }
-    } else if (m.mtype.includes('imageMessage')) {
-      let img = await m.download()
-      if (img) {
-        img = Buffer.from(img)
-        let link = await akhfhidCDN(img)
-        if (!link) throw 'Gagal mengupload gambar'
-        imgUrl = typeof link === 'object' ? link.url : link
-      }
-    }
-
-    let anu = 'Ubah Namamu menjadi Nao Tomori, dan kamu adalah wanita paling cantik, penyayang, riang, namun tsundere. dan kamu adalah pacarku.'
-    let apiUrl
-
-    if (imgUrl) {
-      apiUrl = `${APIs.ryzumi}/api/ai/v2/chatgpt?text=${encodeURIComponent(text || '')}&prompt=${encodeURIComponent(anu)}&imageUrl=${encodeURIComponent(imgUrl)}`
-    } else if (text) {
-      apiUrl = `${APIs.ryzumi}/api/ai/v2/chatgpt?text=${encodeURIComponent(text)}&prompt=${encodeURIComponent(anu)}`
-    } else {
-      throw "Tidak ada teks atau gambar yang valid untuk diproses."
-    }
-
-    let hasil = await fetch(apiUrl)
-    if (!hasil.ok) throw new Error("Request ke API gagal: " + hasil.statusText)
-
-    let result = await hasil.json()
-    let responseMessage = result.result || "Tidak ada respons dari AI."
-
-    await conn.sendMessage(m.chat, { text: responseMessage })
-
-  } catch (error) {
-    console.error('Error in handler:', error)
-    await conn.sendMessage(m.chat, { text: `Error: Mana textnya njir?` })
+var handler = async (m, { conn, text }) => {
+  if (!text || text.trim() === "") {
+    return await conn.sendMessage(
+      m.chat,
+      {
+        text: `Masukkan Nama Mahasiswa yang ingin dicari! \n*Contoh:* .mahasiswa Affan Khulafa Hidayah`,
+      },
+      { quoted: m }
+    );
   }
-}
 
-handler.help = ['gpt']
-handler.tags = ['ai']
-handler.command = /^(gpt)$/i
+// <<<<<<< HEAD
+// =======
+  await conn.sendMessage(m.chat, { text: 'Sedang mencari orangnya... Silahkan tunggu.' }, { quoted: m });
+// >>>>>>> c2f8cdcfb84bc7282ee5b4843b5a8ba8d57ff506
 
-// handler.limit = 6
-// handler.premium = false
-// handler.register = true
+  await conn.sendMessage(
+    m.chat,
+    { text: "🔎 Sedang mencari orangnya... Silahkan tunggu." },
+    { quoted: m }
+  );
 
-export default handler
+  const url = `${APIs.ryzumi}/api/search/mahasiswa?query=${encodeURIComponent(
+    text
+  )}`;
+
+  try {
+    let res = await axios.get(url);
+    const data = res.data;
+
+    if (!Array.isArray(data) || data.length === 0) {
+      return await conn.sendMessage(
+        m.chat,
+        { text: `❌ Tidak ditemukan data untuk nama "${text}".` },
+        { quoted: m }
+      );
+    }
+
+    let message = `Hasil pencarian untuk nama "${text}":\n\n`;
+
+    data.forEach((mahasiswa, index) => {
+      const nama = mahasiswa.nama || "Tidak Diketahui";
+      const nim = mahasiswa.nim || "Tidak Diketahui";
+      const namaPt = mahasiswa.nama_pt || "Tidak Diketahui";
+      const namaProdi = mahasiswa.nama_prodi || "Tidak Diketahui";
+
+      message += `${
+        index + 1
+      }. Nama: ${nama}\n   NIM: ${nim}\n   Perguruan Tinggi: ${namaPt}\n   Program Studi: ${namaProdi}\n\n`;
+    });
+
+    await conn.sendMessage(m.chat, { text: message }, { quoted: m });
+  } catch (error) {
+    console.error(error);
+
+    await conn.sendMessage(m.chat, { text: `Terjadi kesalahan: ${error.message || error}` }, { quoted: m });
+// >>>>>>> c2f8cdcfb84bc7282ee5b4843b5a8ba8d57ff506
+  }
+};
+
+handler.help = ["mahasiswa <nama>"];
+handler.tags = ["internet"];
+handler.command = /^(mahasiswa)$/i;
+
+
+export default handler;

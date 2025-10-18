@@ -5,14 +5,13 @@ const carbonify = async (code) => {
     const encodedCode = encodeURIComponent(code);
     const url = `https://api.nekolabs.my.id/canvas/carbonify?code=${encodedCode}`;
     const { data } = await axios.get(url, { responseType: "arraybuffer" });
-    return data; // Mengembalikan buffer gambar
+    return data; // buffer siualan
   } catch (error) {
     throw new Error(error.message);
   }
 };
 
 let handler = async (m, { conn, usedPrefix, text }) => {
-  /* penggunaan: .carbon <code> */
   if (!text) {
     await conn.sendMessage(
       m.chat,
