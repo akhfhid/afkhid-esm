@@ -9,7 +9,6 @@ import { spawn } from "child_process";
 import ffmpegPath from "ffmpeg-static";
 import { fileTypeFromBuffer } from "file-type";
 
-const TEMP_DIR = path.join(process.cwd(), "temp");
 const MAX_VIDEO_DURATION_SECONDS = 600;
 const MAX_VIDEO_WIDTH = 4096;
 const MAX_VIDEO_HEIGHT = 2160;
@@ -19,6 +18,7 @@ const DEFAULT_POLL_ATTEMPTS = 30;
 const LONG_POLL_ATTEMPTS = 120;
 const REQUEST_MAX_RETRIES = 2;
 const REQUEST_RETRY_DELAY_MS = 1500;
+const TEMP_DIR = path.join(process.cwd(), "temp");
 
 class CapcutMagic {
   constructor(isDebug = false) {
@@ -226,92 +226,109 @@ class CapcutMagic {
   };
 
   _getMetaVideo = async function (videoBuffer, tempFileName) {
-    return new Promise(async (resolve, reject) => {
-      const tempVideoPath = path.join(TEMP_DIR, tempFileName);
-      try {
-        await fsPromises.writeFile(tempVideoPath, videoBuffer);
-        this.log(`Getting metadata for temporary video file: ${tempVideoPath}`);
-        const ffmpegProcess = spawn(
-          ffmpegPath,
-          ["-i", tempVideoPath, "-f", "null", "-"],
-          { stdio: ["ignore", "ignore", "pipe"] }
-        );
+    const tempVideoPath = path.join(TEMP_DIR, tempFileName);
+    this.log(`Using temporary video file: ${tempVideoPath}`);
+    try {
+      await fsPromises.writeFile(tempVideoPath, videoBuffer);
+      this.log(`Temporary video file created: ${tempVideoPath}`);
+      const ffmpegProcess = spawn(
+        ffmpegPath,
+        ["-i", tempVideoPath, "-f", "null", "-"],
+        { stdio: ["ignore", "ignore", "pipe"] }
+      );
 
-        let stderrData = "";
-        ffmpegProcess.stderr.on("data", (data) => {
-          stderrData += data.toString();
-        });
+      let stderrData = "";
+      ffmpegProcess.stderr.on("data", (data) => {
+        stderrData += data.toString();
+      });
 
-        ffmpegProcess.on("close", (code) => {
-          this.debug("FFmpeg Metadata Process stderr", stderrData);
+      ffmpegProcess.on("close", (code) => {
+        this.debug("FFmpeg Metadata Process stderr", stderrData);
+        if (code !== 0) {
           console.error(`[CapcutMagic] FFmpeg stderr:\n${stderrData}`);
-          if (code !== 0)
-            return reject(
-              new Error(
-                `FFmpeg metadata process exited with code ${code}. ` +
-                  `Details: ${stderrData.trim()}`
-              )
-            );
-
-          const durationMatch = stderrData.match(
-            /Duration: (\d{2}):(\d{2}):(\d{2})\.(\d+)/
-          );
-          if (!durationMatch)
-            return reject(new Error("Could not parse video duration."));
-          const durationInSeconds =
-            parseInt(durationMatch[1], 10) * 3600 +
-            parseInt(durationMatch[2], 10) * 60 +
-            parseInt(durationMatch[3], 10) +
-            parseInt(durationMatch[4], 10) / 1000;
-          if (durationInSeconds > MAX_VIDEO_DURATION_SECONDS)
-            return reject(
-              new Error(
-                `Video duration (${durationInSeconds.toFixed(
-                  2
-                )}s) exceeds limit (${MAX_VIDEO_DURATION_SECONDS}s).`
-              )
-            );
-
-          const resolutionMatch = stderrData.match(
-            /Stream #\d+:\d+.*Video:.*\s(\d{2,5})x(\d{2,5})[\s,]/
-          );
-          if (!resolutionMatch)
-            return reject(new Error("Could not parse video resolution."));
-          const width = parseInt(resolutionMatch[1], 10);
-          const height = parseInt(resolutionMatch[2], 10);
-          if (width > MAX_VIDEO_WIDTH || height > MAX_VIDEO_HEIGHT)
-            return reject(
-              new Error(
-                `Video resolution (${width}x${height}) exceeds limit (${MAX_VIDEO_WIDTH}x${MAX_VIDEO_HEIGHT}).`
-              )
-            );
-
-          this.log(
-            `Video Meta: ${width}x${height}, Duration: ${durationInSeconds.toFixed(
-              2
-            )}s`
-          );
-          resolve({ width, height, duration: durationInSeconds });
-        });
-        ffmpegProcess.on("error", (err) =>
           reject(
             new Error(
-              `Failed to start FFmpeg metadata process. Check FFmpeg installation and permissions.`
+              `FFmpeg metadata process exited with code ${code}. ` +
+                `Details: ${stderrData.trim()}`
             )
+          );
+          return; 
+        }
+
+        const durationMatch = stderrData.match(
+          /Duration: (\d{2}):(\d{2}):(\d{2})\.(\d+)/
+        );
+        if (!durationMatch) {
+          reject(new Error("Could not parse video duration."));
+          return; 
+        }
+        const durationInSeconds =
+          parseInt(durationMatch[1], 10) * 3600 +
+          parseInt(durationMatch[2], 10) * 60 +
+          parseInt(durationMatch[3], 10) +
+          parseInt(durationMatch[4], 10) / 1000;
+        if (durationInSeconds > MAX_VIDEO_DURATION_SECONDS) {
+          reject(
+            new Error(
+              `Video duration (${durationInSeconds.toFixed(
+                2
+              )}s) exceeds limit (${MAX_VIDEO_DURATION_SECONDS}s).`
+            )
+          );
+          return; 
+        }
+
+        const resolutionMatch = stderrData.match(
+          /Stream #\d+:\d+.*Video:.*\s(\d{2,5})x(\d{2,5})[\s,]/
+        );
+        if (!resolutionMatch) {
+          reject(new Error("Could not parse video resolution."));
+          return; 
+        }
+        const width = parseInt(resolutionMatch[1], 10);
+        const height = parseInt(resolutionMatch[2], 10);
+        if (width > MAX_VIDEO_WIDTH || height > MAX_VIDEO_HEIGHT) {
+          reject(
+            new Error(
+              `Video resolution (${width}x${height}) exceeds limit (${MAX_VIDEO_WIDTH}x${MAX_VIDEO_HEIGHT}).`
+            )
+          );
+          return; 
+        }
+
+        this.log(
+          `Video Meta: ${width}x${height}, Duration: ${durationInSeconds.toFixed(
+            2
+          )}s`
+        );
+        resolve({ width, height, duration: durationInSeconds });
+      });
+
+      ffmpegProcess.on("error", (err) => {
+        console.error(
+          `Failed to start FFmpeg metadata process: ${err.message}`
+        );
+        reject(
+          new Error(
+            `Failed to start FFmpeg metadata process. Check FFmpeg installation and permissions.`
           )
         );
-      } catch (error) {
-        reject(error);
-      } finally {
-        if (fs.existsSync(tempVideoPath)) {
-          await fsPromises
-            .unlink(tempVideoPath)
-            .catch((e) =>
-              console.warn(`Failed to delete temp file ${tempVideoPath}:`, e)
-            );
-        }
+        // Hapus file setelah error
+      });
+    } catch (error) {
+      console.error(`Error creating temporary video file: ${error.message}`);
+      reject(error);
+      // Hapus file setelah error
+    } finally {
+      if (fs.existsSync(tempVideoPath)) {
+        this.log(`Deleting temporary video file: ${tempVideoPath}`);
+        fsPromises
+          .unlink(tempVideoPath)
+          .catch((e) =>
+            console.warn(`Failed to delete temp file ${tempVideoPath}:`, e)
+          );
       }
-    });
+    }
   };
 
   getCookie = async function () {

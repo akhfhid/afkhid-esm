@@ -1,10 +1,16 @@
 import axios from 'axios'
 
 let handler = async (m, { conn, text }) => {
-    if (!text || !text.trim()) throw 'Masukkan username yang valid!'
+
+    if (!text || !text.trim()) await conn.sendMessage(m.chat, {
+        text :"Masukan username yang valid!"
+    }) 
     let username = text.trim()
 
-    m.reply(wait)
+    conn.sendMessage(m.chat, {
+        text : wait
+    })
+    // m.reply(wait)
 
     try {
         const { data } = await axios.get(`${APIs.ryzumi}/api/stalk/tiktok?username=${username}`)
