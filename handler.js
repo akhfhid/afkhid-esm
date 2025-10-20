@@ -525,22 +525,29 @@ Untuk menghapus pesan yang dikirim oleh Bot, reply pesan dengan perintah
     }
 }
 
-global.dfail = (type, m, conn) => {
-    let msg = {
-        rowner: '*ONLY DEVELOPER* • CMD INI HANYA UNTUK DEVELOPER BOT',
-        owner: '*ONLY OWNER* • CMD INI HANYA UNTUK OWNER BOT',
-        mods: '*ONLY MODERATOR* • CMD INI HANYA UNTUK MODERATOR BOT',
-        premium: '*ONLY PREMIUM* • CMD INI HANYA UNTUK PREMIUM USER',
-        group: '*GROUP CHAT* • CMD INI HANYA BISA DIPAKAI DI DALAM GROUP',
-        private: '*PRIVATE CHAT* • CMD INI HANYA BISA DIPAKAI DI PRIVATE CHAT',
-        admin: '*ONLY ADMIN* • CMD INI HANYA UNTUK ADMIN GROUP',
-        botAdmin: '*ONLY BOT ADMIN* • CMD INI HANYA BISA DIGUNAKAN KETIKA BOT MENJADI ADMIN',
-        unreg: '*YOU ARE NOT REGISTERED YET* • KETIK .regiter nama.umur UNTUK BISA MENGGUNAKAN FITUR INI CONTOH .register kairi.19',
-        restrict: '*RESTRICT* • RESTRICT BELUM DINYALAKAN DICHAAT INI',
-    }[type]
-    if (msg) return conn.sendMessage(m.chat, { text: msg }, { quoted: m })
-    // if (msg) return conn.reply(m.chat, msg, m)
-}
+global.dfail = async (type, m, conn) => {
+    try {
+        const msg = {
+            rowner: '*ONLY DEVELOPER* • CMD INI HANYA UNTUK DEVELOPER BOT',
+            owner: '*ONLY OWNER* • CMD INI HANYA UNTUK OWNER BOT',
+            mods: '*ONLY MODERATOR* • CMD INI HANYA UNTUK MODERATOR BOT',
+            premium: '*ONLY PREMIUM* • CMD INI HANYA UNTUK PREMIUM USER',
+            group: '*GROUP CHAT* • CMD INI HANYA BISA DIPAKAI DI DALAM GROUP',
+            private: '*PRIVATE CHAT* • CMD INI HANYA BISA DIPAKAI DI PRIVATE CHAT',
+            admin: '*ONLY ADMIN* • CMD INI HANYA UNTUK ADMIN GROUP',
+            botAdmin: '*ONLY BOT ADMIN* • CMD INI HANYA BISA DIGUNAKAN KETIKA BOT MENJADI ADMIN',
+            unreg: '*YOU ARE NOT REGISTERED YET* • KETIK .register nama.umur',
+            restrict: '*RESTRICT* • RESTRICT BELUM DINYALAKAN DICHAAT INI',
+        }[type];
+
+        if (!msg) return;
+        await conn.sendMessage(m.chat, { text: msg }, { quoted: m });
+
+    } catch (e) {
+        console.error('Gagal kirim pesan dfail:', e);
+    }
+};
+
 
 
 let file = global.__filename(import.meta.url, true)
