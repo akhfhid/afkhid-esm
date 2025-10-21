@@ -49,7 +49,6 @@ let handler = async (m, { conn }) => {
     m.reply(e.message || "Terjadi kesalahan saat memproses gambar.");
   }
 };
-
 handler.help = ["lens"];
 handler.tags = ["tools"];
 handler.command = /^(lens|googlelens)$/i;
