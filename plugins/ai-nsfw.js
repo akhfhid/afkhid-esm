@@ -2,7 +2,7 @@ import axios from "axios";
 import { Buffer } from "buffer";
 
 const waiNsfw = async (prompt, ratio = "1:1") => {
-  const ep = "https://api.nekolabs.my.id/ai/wai-nsfw-illustrous/v12";
+  const ep = "https://api.nekolabs.my.id/ai/wai-nsfw-illustrous/v11";
   const { data } = await axios.get(ep, {
     params: { prompt, ratio },
     timeout: 120_000, 

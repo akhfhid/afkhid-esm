@@ -67,7 +67,7 @@ const handler = async (m, { conn, usedPrefix, text }) => {
     }
 };
 
-handler.help = ['obat <penyakit>'];
+handler.help = ['halodoc <penyakit>'];
 handler.tags = ['health'];
-handler.command = /^obat$/i;
+handler.command = /^halodoc$/i;
 export default handler;

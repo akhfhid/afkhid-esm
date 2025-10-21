@@ -1,51 +1,59 @@
-import axios from 'axios'
-import { akhfhidCDN } from '../lib/uploadFile.js'
+import axios from "axios";
+import { akhfhidCDN } from "../lib/uploadFile.js";
 
 let handler = async (m, { conn }) => {
-    m.reply(wait)
+  const quoted = m.quoted ? m.quoted : m;
+  const mime = (quoted.msg || quoted).mimetype || "";
+  if (!mime.startsWith("image/"))
+    await conn.sendMessage(m.chat, {
+      text: "Kirim/reply gambar dengan caption .lens",
+    });
 
-    try {
-        let q = m.quoted ? m.quoted : m
-        let mime = (q.msg || q).mimetype || ''
-        if (!mime) throw 'Kirim/Reply gambar dengan perintah .googlelens'
+      await conn.sendMessage(m.chat, {
+        text: "Sedang menindai gambar...",
+      });
 
-        let media = await q.download()
-        if (!media) throw 'Gagal mendownload gambar!'
+  try {
+    const media = await quoted.download();
+    if (!media) throw "Gagal mengunduh gambar!";
 
-        let cdnResult = await akhfhidCDN(media)
-        if (!cdnResult || !cdnResult.url) throw 'Gagal upload ke CDN!'
+    const { url } = await akhfhidCDN(media);
+    if (!url) throw "Gagal upload ke CDN!";
 
-        let url = cdnResult.url
-        let res = await axios.get(`${APIs.ryzumi}/api/search/lens`, {
-            params: { url },
-        })
+    const { data } = await axios.get(
+      "https://api.nekolabs.my.id/discovery/lens",
+      {
+        params: { url },
+        timeout: 25_000,
+      }
+    );
 
-        if (!res.data?.result?.length) throw 'Tidak ditemukan hasil dari Google Lens.'
+    if (!data.success || !data.result?.length)
+      throw "Tidak ditemukan hasil Google Lens.";
 
-        let teks = `🔎 *Google Lens Results (Full Detail)*\n\n`
+    const out =
+      data.result
+        .map(
+          (r, i) =>
+            `🔎 *Hasil ${i + 1}*\n` +
+            `📖 *Judul:* ${r.title}\n` +
+            `🔗 *Halaman:* ${r.link}\n` +
+            `🖼️ *Thumb:* ${r.thumbnail}\n` +
+            `📍 *Sumber:* ${r.source}\n`
+        )
+        .join("\n") + "\n© afkhid-esm";
 
-        for (let r of res.data.result) {
-            teks += `📌 *Position:* ${r.position}\n`
-            teks += `📖 *Title:* ${r.title}\n`
-            teks += `🔗 *Page Link:* ${r.link}\n`
-            teks += `🖼️ *Image:* ${r.image?.link || '-'}\n`
-            teks += `📏 *Image Size:* ${r.image?.width}x${r.image?.height}\n`
-            teks += `📍 *Source:* ${r.source}\n`
-            teks += `🖼️ *Thumbnail:* ${r.thumbnail}\n\n`
-        }
+    await conn.sendMessage(m.chat, out.trim(), m);
+  } catch (e) {
+    console.error(e);
+    m.reply(e.message || "Terjadi kesalahan saat memproses gambar.");
+  }
+};
 
-        await conn.reply(m.chat, teks.trim(), m)
+handler.help = ["lens"];
+handler.tags = ["tools"];
+handler.command = /^(lens|googlelens)$/i;
+// handler.register = true;
+// handler.limit = 2;
 
-    } catch (err) {
-        console.error(err)
-        m.reply(err.message || 'Error internal server')
-    }
-}
-
-handler.help = ['lens']
-handler.tags = ['internet']
-handler.command = /^(googlelens|lens)$/i
-handler.register = true
-handler.limit = 2
-
-export default handler
+export default handler;
