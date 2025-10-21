@@ -1,26 +1,26 @@
 import axios from "axios";
 import { Buffer } from "buffer";
 
-const MAX = 7;
+const MAX = 5;
 
 const handler = async (m, { conn, usedPrefix, text }) => {
   if (!text) {
     return conn.sendMessage(
       m.chat,
-      { text: `*Contoh:*\n${usedPrefix}pinterest Wallpaper Dekstop Denji` },
+      { text: `*Contoh:*\n${usedPrefix}deviant Reze Chainsaw Man` },
       { quoted: m }
     );
   }
-
+//  let command = text
   await conn.sendMessage(
     m.chat,
-    { text: `Mengumpulkan hasil "${text}" dari Pinterest…` },
+    { text: `Mengumpulkan karya ${text} dari Deviant...`},
     { quoted: m }
   );
 
   try {
     const { data } = await axios.get(
-      "https://api.nekolabs.my.id/discovery/pinterest/search",
+      "https://api.nekolabs.my.id/discovery/devianart/search",
       { params: { q: text.trim() }, timeout: 15_000 }
     );
     if (!data.success || !data.result?.length)
@@ -32,12 +32,7 @@ const handler = async (m, { conn, usedPrefix, text }) => {
       const buff = await axios
         .get(it.imageUrl, { responseType: "arraybuffer" })
         .then((r) => Buffer.from(r.data));
-      return {
-        buffer: buff,
-        caption: it.caption || "Pinterest image",
-        url: it.url,
-        author: it.author?.fullname || it.author?.name || "Unknown",
-      };
+      return { buffer: buff, title: it.title, url: it.url };
     });
     const ready = await Promise.all(jobs);
 
@@ -46,7 +41,7 @@ const handler = async (m, { conn, usedPrefix, text }) => {
         m.chat,
         {
           image: item.buffer,
-          caption: `*${item.caption}*\n${item.url}\nAuthor: ${item.author}\n\n© afkhid-esm`,
+          caption: `*${item.title}*\n${item.url}\n\n© afkhid-esm`,
         },
         { quoted: m }
       );
@@ -54,13 +49,13 @@ const handler = async (m, { conn, usedPrefix, text }) => {
   } catch (e) {
     await conn.sendMessage(
       m.chat,
-      { text: `❌ Gagal memuat hasil "${text}" dari Pinterest.` },
+      { text: `Gagal memuat karya ${text} dari Deviant` },
       { quoted: m }
     );
   }
 };
 
-handler.help = ["pinterest <kata kunci>"];
+handler.help = ["deviant <kata kunci>"];
 handler.tags = ["internet"];
-handler.command = /^pinterest$/i;
+handler.command = /^deviant$/i;
 export default handler;
