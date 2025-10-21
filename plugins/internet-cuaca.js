@@ -1,121 +1,60 @@
-import fetch from "node-fetch";
+/* -------------- Prakiraan Cuaca 10-Hari (AccuWeather via Nekolabs) -------------- */
+import axios from 'axios';
 
-let handler = async (m, { conn, text, usedPrefix, command }) => {
-  if (!text) {
-    await conn.sendMessage(
-      m.chat,
-      {
-        text: `Penggunaan:\n${usedPrefix + command} <teks>\n\nContoh:\n${
-          usedPrefix + command
-        } Jakarta`,
-      },
-      { quoted: m }
-    );
-    return;
-  }
-
-  await conn.sendMessage(m.chat, { text: `${global.wait}` }, { quoted: m });
-  let teksenc = encodeURIComponent(text);
-
-  let res = await fetch(
-    `https://api.openweathermap.org/data/2.5/weather?q=${teksenc}&units=metric&appid=060a6bcfa19809c2cd4d97a212b19273`
-  );
-
-  if (!res.ok) {
-    await conn.sendMessage(
-      m.chat,
-      { text: "Lokasi tidak ditemukan" },
-      { quoted: m }
-    );
-    return;
-  }
-
-  let json = await res.json();
-
-  if (json.cod != 200) {
-    await conn.sendMessage(
-      m.chat,
-      { text: JSON.stringify(json) },
-      { quoted: m }
-    );
-    return;
-  }
-
-  let gustKmph = json.wind.gust * 3.6;
-
-  let sunriseTime = json.sys.sunrise
-    ? new Date(json.sys.sunrise * 1000).toLocaleTimeString("id-ID", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-        timeZone: "Asia/Jakarta",
-      })
-    : "Tidak Tersedia";
-  let sunsetTime = json.sys.sunset
-    ? new Date(json.sys.sunset * 1000).toLocaleTimeString("id-ID", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-        timeZone: "Asia/Jakarta",
-      })
-    : "Tidak Tersedia";
-  let predictionTime = new Date(
-    json.dt * 1000 + json.timezone * 1000
-  ).toLocaleString("id-ID", {
-    timeZone: "Asia/Jakarta",
-  });
-
-  let groundLevelPressure =
-    json.main.grnd_level !== undefined
-      ? json.main.grnd_level + " hPa"
-      : "Tidak Tersedia";
-  let seaLevelPressure =
-    json.main.sea_level !== undefined
-      ? json.main.sea_level + " hPa"
-      : "Tidak Tersedia";
-
+const handler = async (m, { conn, usedPrefix, text }) => {
+  const city = text?.trim() || 'Cianjur'; 
   await conn.sendMessage(
     m.chat,
-    {
-      text: `
-🤩 Koordinat: ${json.coord.lat}, ${
-        json.coord.lon
-      } https://www.google.com/maps/place/${teksenc}/@${json.coord.lat},${
-        json.coord.lon
-      }
-🌍 Lokasi: ${json.name}, ${json.sys.country}
-🌦️ Cuaca: ${json.weather[0].description}, intinya: ${json.weather[0].main}
-🌡️ Suhu saat ini: ${json.main.temp} °C
-🔥 Suhu tertinggi: ${json.main.temp_max} °C
-❄️ Suhu terendah: ${json.main.temp_min} °C
-😊 Terasa seperti: ${json.main.feels_like} °C
-💧 Kelembapan: ${json.main.humidity} %
-💨 Angin: ${json.wind.speed} km/jam, ${
-        json.wind.deg
-      } derajat, guncangan ${gustKmph.toFixed(2)} km/jam
-☔ Curah Hujan (1 Jam): ${json.rain ? json.rain["1h"] || 0 : 0} mm
-☁ Persen Awan: ${json.clouds ? json.clouds.all || 0 : 0} %
-🌬️ Tekanan (Udara): ${json.main.pressure} hPa
-⛳ Tingkat Tanah: ${groundLevelPressure}
-🌊 Tingkat Laut: ${seaLevelPressure}
-👀 Jarak Pandang: ${
-        json.visibility
-          ? `${(json.visibility / 1000).toFixed(2)} km`
-          : "Tidak Tersedia"
-      }
-🔮 Prediksi di waktu: ${predictionTime} WIB
-🌄 Waktu Sunrise: ${sunriseTime} WIB
-🌅 Waktu Sunset: ${sunsetTime} WIB
-    `.trim(),
-    },
+    { text: `⏳ Mengambil prakiraan cuaca *${text}*…` },
     { quoted: m }
   );
+
+  try {
+    const { data } = await axios.get(
+      'https://api.nekolabs.my.id/discovery/accuweather/forecast-10day',
+      { params: { city }, timeout: 15_000 }
+    );
+    if (!data.success) throw new Error(data.message || 'Gagal load cuaca');
+
+    const { location, forecastData } = data.result;
+    const lines = [
+      `🌍 *${location.name}, ${location.country}*`,
+      `📌 ${forecastData.Text}\n`,
+    ];
+
+    forecastData.DailyForecasts.forEach((f) => {
+      const d = new Date(f.Date);
+      const day = d.toLocaleDateString('id-ID', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+      });
+      lines.push(
+        [
+          `┏━ ${day}`,
+          `┃ 🌡️  ${f.Temperature.Min}°C – ${f.Temperature.Max}°C`,
+          `┃ ☁️  ${f.Day.IconPhrase}`,
+          `┃ 💧  Hujan ${f.Day.PrecipitationProbability}% | Petir ${f.Day.ThunderstormProbability}%`,
+          `┃ 🌬️  ${f.Day.Wind.Speed} km/h ${f.Day.Wind.Direction}`,
+          `┃ ☀️  ${f.HoursOfSun} jam`,
+          `┃ 🌫️  UV: ${f.AirAndPollen.UVIndex}`,
+          `┗━ https://accuweather.com`,
+        ].join('\n')
+      );
+    });
+
+    lines.push('\n© afkhid-esm');
+    await conn.sendMessage(m.chat, { text: lines.join('\n') }, { quoted: m });
+  } catch (e) {
+    await conn.sendMessage(
+      m.chat,
+      { text: `❌ ${e.message || 'Gagal memuat prakiraan cuaca.'}` },
+      { quoted: m }
+    );
+  }
 };
 
-handler.help = ["cuaca"];
-handler.tags = ["internet"];
-handler.command = /^(cuaca|weather)$/i;
-
-handler.register = true;
-
+handler.help = ['cuaca <kota>'];
+handler.tags = ['info'];
+handler.command = /^cuaca$/i;
 export default handler;
