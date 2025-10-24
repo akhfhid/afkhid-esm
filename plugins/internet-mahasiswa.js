@@ -5,7 +5,7 @@ var handler = async (m, { conn, text }) => {
     return await conn.sendMessage(
       m.chat,
       {
-        text: `Masukkan Nama Mahasiswa yang ingin dicari! \n*Contoh:* .mahasiswa Affan Khulafa Hidayah`,
+        text: `Masukkan Nama Mahasiswa yang ingin dicari! \n*Contoh:* .mahasiswa Affan `,
       },
       { quoted: m }
     );
@@ -13,7 +13,7 @@ var handler = async (m, { conn, text }) => {
 
 // <<<<<<< HEAD
 // =======
-  await conn.sendMessage(m.chat, { text: 'Sedang mencari orangnya... Silahkan tunggu.' }, { quoted: m });
+  // await conn.sendMessage(m.chat, { text: 'Sedang mencari orangnya... Silahkan tunggu.' }, { quoted: m });
 // >>>>>>> c2f8cdcfb84bc7282ee5b4843b5a8ba8d57ff506
 
   await conn.sendMessage(

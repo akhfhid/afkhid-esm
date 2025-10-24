@@ -1,4 +1,3 @@
-/* -------------- Prakiraan Cuaca 10-Hari (AccuWeather via Nekolabs) -------------- */
 import axios from 'axios';
 
 const handler = async (m, { conn, usedPrefix, text }) => {
