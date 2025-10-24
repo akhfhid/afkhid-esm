@@ -12,20 +12,20 @@ var handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
     case 'welcome':
       if (!m.isGroup) {
         if (!isOwner) {
-          return await conn.reply(m.chat, 'Only owner can use this command in private chat!', m);
+          return await conn.sendMessage(m.chat, 'Only owner can use this command in private chat!', m);
         }
       } else if (!isAdmin) {
-        return await conn.reply(m.chat, 'Only admin can use this command in group chat!', m);
+        return await conn.sendMessage(m.chat, 'Only admin can use this command in group chat!', m);
       }
       chat.welcome = isEnable;
       break;
     case 'detect':
       if (!m.isGroup) {
         if (!isOwner) {
-          return await conn.reply(m.chat, 'Only owner can use this command in private chat!', m);
+          return await conn.sendMessage(m.chat, 'Only owner can use this command in private chat!', m);
         }
       } else if (!isAdmin) {
-        return await conn.reply(m.chat, 'Only admin can use this command in group chat!', m);
+        return await conn.sendMessage(m.chat, 'Only admin can use this command in group chat!', m);
       }
       chat.detect = isEnable;
       break;
@@ -33,7 +33,7 @@ var handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
     case 'antiviewonce':
       if (m.isGroup) {
         if (!(isAdmin || isOwner)) {
-          return await conn.reply(m.chat, 'Only admin or owner can use this command in group chat!', m);
+          return await conn.sendMessage(m.chat, 'Only admin or owner can use this command in group chat!', m);
         }
       }
       chat.viewonce = isEnable;
@@ -41,7 +41,7 @@ var handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
     case 'delete':
       if (m.isGroup) {
         if (!(isAdmin || isOwner)) {
-          return await conn.reply(m.chat, 'Only admin or owner can use this command in group chat!', m);
+          return await conn.sendMessage(m.chat, 'Only admin or owner can use this command in group chat!', m);
         }
       }
       // Invert logic: chat.delete=true means anti-delete OFF (do not announce)
@@ -52,7 +52,7 @@ var handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
     case 'antidelete':
       if (m.isGroup) {
         if (!(isAdmin || isOwner)) {
-          return await conn.reply(m.chat, 'Only admin or owner can use this command in group chat!', m);
+          return await conn.sendMessage(m.chat, 'Only admin or owner can use this command in group chat!', m);
         }
       }
       chat.delete = !isEnable;
@@ -63,7 +63,7 @@ var handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
     case 'self':
       isAll = true;
       if (!isROwner) {
-        return await conn.reply(m.chat, 'Only regular owner can use this command!', m);
+        return await conn.sendMessage(m.chat, 'Only regular owner can use this command!', m);
       }
       global.opts['self'] = isEnable;
       // Keep DB public flag in sync: self => public false
@@ -72,7 +72,7 @@ var handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
     case 'public':
       isAll = true;
       if (!isROwner) {
-        return await conn.reply(m.chat, 'Only regular owner can use this command!', m);
+        return await conn.sendMessage(m.chat, 'Only regular owner can use this command!', m);
       }
       global.opts['self'] = !isEnable;
       // public => DB public true/false
@@ -81,7 +81,7 @@ var handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
     case 'antilink':
       if (m.isGroup) {
         if (!(isAdmin || isOwner)) {
-          return await conn.reply(m.chat, 'Only admin or owner can use this command in group chat!', m);
+          return await conn.sendMessage(m.chat, 'Only admin or owner can use this command in group chat!', m);
         }
       }
       chat.antiLink = isEnable;
@@ -89,27 +89,27 @@ var handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
     case 'autoSticker':
       if (m.isGroup) {
         if (!(isAdmin || isOwner)) {
-          return await conn.reply(m.chat, 'Only admin or owner can use this command in group chat!', m);
+          return await conn.sendMessage(m.chat, 'Only admin or owner can use this command in group chat!', m);
         }
       }
       chat.autoSticker = isEnable;
       break;
     case 'autoupnime':
       if (!isROwner) {
-        return await conn.reply(m.chat, 'Only regular owner can use this command!', m);
+        return await conn.sendMessage(m.chat, 'Only regular owner can use this command!', m);
       }
       chat.updateAnime = isEnable;
       break;
     case 'simi':
       if (!isROwner) {
-        return await conn.reply(m.chat, 'Only regular owner can use this command!', m);
+        return await conn.sendMessage(m.chat, 'Only regular owner can use this command!', m);
       }
       chat.simi = isEnable;
       break;
     case 'antispam':
       if (m.isGroup) {
         if (!(isAdmin || isOwner)) {
-          return await conn.reply(m.chat, 'Only admin or owner can use this command in group chat!', m);
+          return await conn.sendMessage(m.chat, 'Only admin or owner can use this command in group chat!', m);
         }
       }
       chat.antiSpam = isEnable;
@@ -117,14 +117,14 @@ var handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
     case 'anticall':
       isAll = true;
       if (!isOwner) {
-        return await conn.reply(m.chat, 'Only owner can use this command!', m);
+        return await conn.sendMessage(m.chat, 'Only owner can use this command!', m);
       }
       chat.anticall = isEnable;
       break;
     case 'nsfw':
       if (m.isGroup) {
         if (!(isAdmin || isOwner)) {
-          return await conn.reply(m.chat, 'Only admin or owner can use this command in group chat!', m);
+          return await conn.sendMessage(m.chat, 'Only admin or owner can use this command in group chat!', m);
         }
       }
       chat.nsfw = isEnable;
@@ -132,7 +132,7 @@ var handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
     case 'premnsfwchat':
       if (m.isGroup) {
         if (!isROwner) {
-          return await conn.reply(m.chat, 'Only regular owner can use this command!', m);
+          return await conn.sendMessage(m.chat, 'Only regular owner can use this command!', m);
         }
       }
       chat.premnsfw = isEnable;
@@ -144,21 +144,21 @@ var handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
     case 'restrict':
       isAll = true;
       if (!isOwner) {
-        return await conn.reply(m.chat, 'Only owner can use this command!', m);
+        return await conn.sendMessage(m.chat, 'Only owner can use this command!', m);
       }
       bot.restrict = isEnable;
       break;
     case 'nyimak':
       isAll = true;
       if (!isROwner) {
-        return await conn.reply(m.chat, 'Only regular owner can use this command!', m);
+        return await conn.sendMessage(m.chat, 'Only regular owner can use this command!', m);
       }
       global.opts['nyimak'] = isEnable;
       break;
     case 'autoread':
       isAll = true;
       if (!isROwner) {
-        return await conn.reply(m.chat, 'Only regular owner can use this command!', m);
+        return await conn.sendMessage(m.chat, 'Only regular owner can use this command!', m);
       }
       global.opts['autoread'] = isEnable;
       break;
@@ -166,7 +166,7 @@ var handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
     case 'privateonly':
       isAll = true;
       if (!isROwner) {
-        return await conn.reply(m.chat, 'Only regular owner can use this command!', m);
+        return await conn.sendMessage(m.chat, 'Only regular owner can use this command!', m);
       }
       global.opts['pconly'] = isEnable;
       break;
@@ -174,7 +174,7 @@ var handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
     case 'grouponly':
       isAll = true;
       if (!isROwner) {
-        return await conn.reply(m.chat, 'Only regular owner can use this command!', m);
+        return await conn.sendMessage(m.chat, 'Only regular owner can use this command!', m);
       }
       global.opts['gconly'] = isEnable;
       break;
@@ -182,20 +182,19 @@ var handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
     case 'statusonly':
       isAll = true;
       if (!isROwner) {
-        return await conn.reply(m.chat, 'Only regular owner can use this command!', m);
+        return await conn.sendMessage(m.chat, 'Only regular owner can use this command!', m);
       }
       global.opts['swonly'] = isEnable;
       break;
     default:
-      if (!/[01]/.test(command)) return await conn.reply(m.chat, contoh, m);
+      if (!/[01]/.test(command)) return await conn.sendMessage(m.chat, contoh, m);
   }
 
-  conn.reply(m.chat, `*––––––『 OPTIONS 』––––––*\n🗂️ *Type:* ${type}\n📊 *Status:* Success ✅\n🎚️ *Options:* ${isEnable ? 'Enable' : 'Disable'}\n📣 *For:* ${isAll ? 'This Bot' : isUser ? '' : 'This Chats'}`, m);
+  conn.sendMessage(m.chat, `*––––––『 OPTIONS 』––––––*\n🗂️ *Type:* ${type}\n📊 *Status:* Success ✅\n🎚️ *Options:* ${isEnable ? 'Enable' : 'Disable'}\n📣 *For:* ${isAll ? 'This Bot' : isUser ? '' : 'This Chats'}`, m);
 };
 
 handler.help = ['enable', 'disable'].map(v => v + 'able <option>');
 handler.tags = ['group', 'owner'];
-// Removed `[01]` so plain digits no longer act as command aliases (avoids '-1' triggering this handler)
 handler.command = /^((en|dis)able|(tru|fals)e|(turn)?o(n|ff))$/i;
 
 export default handler;

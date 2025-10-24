@@ -40,7 +40,6 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
                     }
                 }
             } else {
-                // Jika URL yang diberikan adalah track tunggal
                 let { title, artists, album, cover, releaseDate } = data.metadata
                  conn.sendMessage(m.chat, {
                     document: { url: data.link },
@@ -67,7 +66,5 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
 handler.help = ['spotify <url>']
 handler.tags = ['downloader']
 handler.command = /^(spotify(dl)?)$/i
-handler.limit = 2
-handler.register = true
 
 export default handler

@@ -14,15 +14,10 @@ const CHARSET = '@%#*+=-:. '; // dari gelap -> terang
  */
 async function convertImageToAscii(buffer, width = DEFAULT_WIDTH) {
   const image = await Jimp.read(buffer);
-
-  // hitung tinggi sesuai rasio, koreksi tinggi karena karakter lebih tinggi dari lebar
   const aspectRatio = image.bitmap.height / image.bitmap.width;
-  const height = Math.max(1, Math.round(width * aspectRatio * 0.5)); // 0.5 koreksi aspek char
-
-  // resize
+  const height = Math.max(1, Math.round(width * aspectRatio * 0.5)); 
   image.resize(width, height);
   image.grayscale();
-
   const chars = CHARSET;
   const len = chars.length - 1;
 
@@ -68,7 +63,6 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
         url = single;
       }
     }
-
     let buffer = null;
     if (!url && m.quoted && typeof conn.downloadMedia === 'function') {
       try {
@@ -86,20 +80,17 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
     if (url && !buffer) {
       buffer = await fetchImageBufferFromUrl(url);
     }
-
     if (!buffer) {
       return await conn.sendMessage(m.chat, {
         text:
-          '❌ Gambar tidak ditemukan.\n\nCara pakai:\n1) Kirim `.img2ascii <image_url> | <width>`\n2) Atau reply pesan gambar lalu kirim `.img2ascii <width>` (mis. `.img2ascii 80`)\n\nContoh:\n.img2ascii https://i.ibb.co/abc/image.jpg | 80'
+          ' Gambar tidak ditemukan.\n\nCara pakai:\n1) Kirim `.img2ascii <image_url> | <width>`\n2) Atau reply pesan gambar lalu kirim `.img2ascii <width>` (mis. `.img2ascii 80`)\n\nContoh:\n.img2ascii https://i.ibb.co/abc/image.jpg | 80'
       }, { quoted: m });
     }
-
     const ascii = await convertImageToAscii(buffer, width);
-
     const MAX_MESSAGE_LENGTH = 6000; 
     if (ascii.length > MAX_MESSAGE_LENGTH) {
       const sample = ascii.slice(0, MAX_MESSAGE_LENGTH);
-      const moreMsg = `\n\n⚠️ Hasil terlalu panjang (lebih dari ${MAX_MESSAGE_LENGTH} karakter). Coba gunakan width lebih kecil, mis. ${Math.max(20, Math.floor(width / 2))}`;
+      const moreMsg = `\n\n Hasil terlalu panjang (lebih dari ${MAX_MESSAGE_LENGTH} karakter). Coba gunakan width lebih kecil, mis. ${Math.max(20, Math.floor(width / 2))}`;
       await conn.sendMessage(m.chat, { text: '```' + sample + '```' + moreMsg }, { quoted: m });
     } else {
       await conn.sendMessage(m.chat, { text: '```' + ascii + '```' }, { quoted: m });

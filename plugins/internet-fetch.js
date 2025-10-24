@@ -55,7 +55,6 @@ let handler = async (m, { text, conn, usedPrefix, command }) => {
             let html = await res.text()
             conn.sendFile(m.chat, Buffer.from(html), 'file.html', null, m)
         } else {
-            // mengirim file sesuai ekstensi
             conn.sendFile(m.chat, redirectUrl, filename, text, m)
         }
 
