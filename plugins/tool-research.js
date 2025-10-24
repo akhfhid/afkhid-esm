@@ -64,7 +64,6 @@ const postProcessTranslation = (text) => {
 
   return capped.replace(/\s{2,}/g, " ").trim();
 };
-
 const cleanRawReport = (raw) => {
   if (!raw) return "";
   const blacklistPatterns = [
