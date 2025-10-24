@@ -536,7 +536,7 @@ global.dfail = async (type, m, conn) => {
             private: '*PRIVATE CHAT* • CMD INI HANYA BISA DIPAKAI DI PRIVATE CHAT',
             admin: '*ONLY ADMIN* • CMD INI HANYA UNTUK ADMIN GROUP',
             botAdmin: '*ONLY BOT ADMIN* • CMD INI HANYA BISA DIGUNAKAN KETIKA BOT MENJADI ADMIN',
-            unreg: '*YOU ARE NOT REGISTERED YET* • KETIK .register nama.umur',
+            unreg: '*YOU ARE NOT REGISTERED YET* • KETIK .register nama.umur\nCONTOH kairi.20',
             restrict: '*RESTRICT* • RESTRICT BELUM DINYALAKAN DICHAAT INI',
         }[type];
 

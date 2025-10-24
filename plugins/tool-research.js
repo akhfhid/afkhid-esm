@@ -1,6 +1,4 @@
 import axios from "axios";
-
-/* ---------------- AI Research helper ---------------- */
 const aiResearch = async (query) => {
   try {
     const encodedQuery = encodeURIComponent(query);
@@ -15,64 +13,40 @@ const aiResearch = async (query) => {
     );
   }
 };
-
-/* ---------------- Google Translate (gratis) + Smart post-process ---------------- */
-// Gunakan endpoint translate.googleapis.com (gratis, tanpa API key)
 const translateWithGoogle = async (text, target = "id") => {
   try {
     const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${target}&dt=t&q=${encodeURIComponent(
       text
     )}`;
     const res = await axios.get(url, { timeout: 15000 });
-    // Struktur: res.data[0] adalah array of [translatedSegment, originalSegment, ...]
     if (!res.data || !Array.isArray(res.data[0])) return null;
-
-    // Gabungkan segmen terjemahan
     const translated = res.data[0].map((seg) => seg[0]).join("");
     return postProcessTranslation(translated);
   } catch (e) {
     return null;
   }
 };
-
-// Post-process untuk membuat terjemahan lebih "natural"
-// - Perbaiki spasi/punctuation
-// - Kapitalisasi awal kalimat
-// - Perbaiki beberapa pola umum literal machine-translate
 const postProcessTranslation = (text) => {
   if (!text) return text || "";
-
-  // Trim awal/akhir dan normalisasi spasi
   let t = String(text).trim().replace(/\s+/g, " ");
-
-  // Hilangkan spasi sebelum tanda baca
   t = t.replace(/\s+([,.:;!?%])/g, "$1");
-
-  // Pastikan ada spasi setelah tanda baca kalau belum ada
   t = t.replace(/([,.;:!?])(?=[^\s])/g, "$1 ");
-
-  // Koreksi kutipan dan spasi
   t = t.replace(/\s+"|"\s+/g, '"');
 
-  // Ganti beberapa frasa literal yang sering muncul akibat terjemahan mentah
   const replacements = [
     [/\bAI\b/g, "AI"],
     [/\bInternet\b/g, "internet"],
     [/\bData\b/g, "data"],
-    [/\bthe\b/gi, "the"], // biarkan kata the — untuk diproses manual jika perlu
-    // contoh: "This is" -> "Ini adalah" (jika ada frasa Inggris pendek)
+    [/\bthe\b/gi, "the"], 
     [/\bThis is\b/gi, "Ini adalah"],
     [/\bThis has\b/gi, "Ini memiliki"],
   ];
   for (const [pat, rep] of replacements) {
     t = t.replace(pat, rep);
   }
-
-  // Pisah menjadi kalimat berdasarkan titik, tanda tanya, seru
   const sents = t
     .split(/([.?!])\s+/)
     .reduce((acc, cur, idx, arr) => {
-      // Karena split dengan capture akan menghasilkan token tanda baca
       if (cur === "." || cur === "?" || cur === "!") {
         acc[acc.length - 1] = (acc[acc.length - 1] || "") + cur;
       } else {
@@ -82,16 +56,12 @@ const postProcessTranslation = (text) => {
     }, [])
     .map((s) => s && s.trim())
     .filter(Boolean);
-
-  // Kapitalisasi setiap kalimat (awalan)
   const capped = sents
     .map((s) => {
-      // Jika sudah kapital di awal, biarkan; jika tidak, kapitalisasi huruf pertama
       return s.charAt(0).toUpperCase() + s.slice(1);
     })
     .join(" ");
 
-  // Perbaikan spasi ganda akhir
   return capped.replace(/\s{2,}/g, " ").trim();
 };
 
@@ -107,7 +77,6 @@ const cleanRawReport = (raw) => {
     /Subscribe/gi,
     /Visit.*for more/gi,
   ];
-
   const lines = raw.split(/\r?\n/);
   const cleaned = lines
     .map((ln) => ln.trim())
@@ -116,19 +85,14 @@ const cleanRawReport = (raw) => {
       for (const p of blacklistPatterns) {
         if (p.test(ln)) return false;
       }
-      // Hapus baris yang hanya URL panjang terpisah atau hanya kata "PDF" saja
       if (/^https?:\/\//i.test(ln) && ln.length < 30) return false;
       if (/^pdf:?$/i.test(ln) || /^docx:?$/i.test(ln)) return false;
       return true;
     })
     .join("\n");
-
-  // Jika hasil terlalu pendek, fallback kembalikan raw as-is (supaya tidak hilang info)
   if (cleaned.split(/\s+/).length < 5) return raw;
   return cleaned;
 };
-
-// Pecah menjadi kalimat (sederhana)
 const splitIntoSentences = (text) => {
   if (!text) return [];
   const sentences = text
@@ -138,8 +102,6 @@ const splitIntoSentences = (text) => {
   if (sentences.length === 1) return text.split(/(?<=[.?!])\s+/);
   return sentences;
 };
-
-// Ringkas: ambil N kalimat pertama yang bermakna
 const summarizeText = (text, maxSentences = 7) => {
   if (!text) return "";
   const s = splitIntoSentences(text)
@@ -155,7 +117,6 @@ const extractUrls = (text) => {
   const matches = text.match(urlRegex);
   return matches ? Array.from(new Set(matches)) : [];
 };
-
 const shortDomain = (url) => {
   try {
     const u = new URL(url);
@@ -164,7 +125,6 @@ const shortDomain = (url) => {
     return url;
   }
 };
-
 let handler = async (m, { conn, usedPrefix, text }) => {
   if (!text) {
     await conn.sendMessage(
@@ -176,16 +136,13 @@ let handler = async (m, { conn, usedPrefix, text }) => {
     );
     return;
   }
-
   await conn.sendMessage(
     m.chat,
     { text: "🔎 Sedang mencari dan menyusun hasil research..." },
     { quoted: m }
   );
-
   try {
     const result = await aiResearch(text);
-
     const rawReportOriginal = result.report || result.summary || "";
     const rawQuery = result.query || text;
     const files = result.files || {};
@@ -194,12 +151,10 @@ let handler = async (m, { conn, usedPrefix, text }) => {
     if (files.pdf) linksToShow.push({ label: "PDF", url: files.pdf });
     if (files.docx) linksToShow.push({ label: "DOCX", url: files.docx });
     const cleanedRaw = cleanRawReport(rawReportOriginal);
-
     const shortEnglish =
       summarizeText(cleanedRaw, 0 ? 7 : 7) ||
       cleanedRaw ||
       "Maaf, ringkasan tidak tersedia dari sumber.";
-
     let translated = await translateWithGoogle(shortEnglish, "id");
     let translationNote = "";
     if (!translated) {
@@ -207,7 +162,6 @@ let handler = async (m, { conn, usedPrefix, text }) => {
       translationNote =
         "\n\n⚠️ Catatan: Terjemahan otomatis tidak tersedia saat ini. Hasil ditampilkan dalam bahasa aslinya.";
     }
-
     const sents = splitIntoSentences(shortEnglish).filter(Boolean);
     let conclusionEnglish = "";
     if (sents.length >= 2) {
@@ -257,7 +211,6 @@ let handler = async (m, { conn, usedPrefix, text }) => {
     outLines.push(translated.trim());
     if (translationNote) outLines.push(translationNote);
     outLines.push("");
-
     outLines.push("*Kesimpulan:*");
     outLines.push(conclusionTranslated.trim());
     outLines.push("");
@@ -278,10 +231,8 @@ let handler = async (m, { conn, usedPrefix, text }) => {
         "🔗 *Sumber:* (tidak ada URL eksplisit terdeteksi dalam laporan)"
       );
     }
-
     outLines.push("");
     outLines.push("© Powered by GPT, Perplexity, Gemini & some article public");
-
     const caption = outLines.join("\n");
 
     await conn.sendMessage(m.chat, { text: caption }, { quoted: m });
@@ -290,7 +241,7 @@ let handler = async (m, { conn, usedPrefix, text }) => {
       m.chat,
       {
         text:
-          "❌ " + (e.message || "Terjadi kesalahan saat memproses permintaan."),
+          "" + (e.message || "Terjadi kesalahan saat memproses permintaan."),
       },
       { quoted: m }
     );
