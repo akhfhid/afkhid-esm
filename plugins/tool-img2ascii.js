@@ -35,14 +35,11 @@ async function convertImageToAscii(buffer, width = DEFAULT_WIDTH) {
   return ascii;
 }
 
-/**
- * fetchImageBufferFromUrl(url)
- */
 async function fetchImageBufferFromUrl(url) {
   const res = await axios.get(url, { responseType: 'arraybuffer', timeout: 20000 });
   return Buffer.from(res.data);
 }
-
+sdfsdf
 let handler = async (m, { conn, text, usedPrefix, command }) => {
   try {
     let url = null;
