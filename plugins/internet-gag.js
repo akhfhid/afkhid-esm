@@ -47,7 +47,6 @@ let handler = async (m, { conn }) => {
       teks += formatItem(c);
     });
 
-    // Honey Items
     teks += `\n🍯 *Event/Honey Items*\n`;
     garden.honey.forEach((h) => {
       teks += formatItem(h);

@@ -38,7 +38,6 @@ async function infoTourney() {
 
       const tags = [];
       item.find(".tags a").each((_, tag) => tags.push($(tag).text().trim()));
-
       tournaments.push({
         title,
         imageUrl: new URL(image, base).href,

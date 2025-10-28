@@ -21,7 +21,6 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
         { text: "⏳ Membuat gambar IQC..." },
         { quoted: m }
     );
-
     try {
         let url = `https://api.ryzumi.vip/api/image/iqc?text=${encodeURIComponent(
             text

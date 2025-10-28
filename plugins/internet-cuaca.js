@@ -14,13 +14,11 @@ const handler = async (m, { conn, usedPrefix, text }) => {
       { params: { city }, timeout: 15_000 }
     );
     if (!data.success) throw new Error(data.message || 'Gagal load cuaca');
-
     const { location, forecastData } = data.result;
     const lines = [
       `🌍 *${location.name}, ${location.country}*`,
       `📌 ${forecastData.Text}\n`,
     ];
-
     forecastData.DailyForecasts.forEach((f) => {
       const d = new Date(f.Date);
       const day = d.toLocaleDateString('id-ID', {
@@ -41,7 +39,6 @@ const handler = async (m, { conn, usedPrefix, text }) => {
         ].join('\n')
       );
     });
-
     lines.push('\n© afkhid-esm');
     await conn.sendMessage(m.chat, { text: lines.join('\n') }, { quoted: m });
   } catch (e) {
@@ -52,7 +49,6 @@ const handler = async (m, { conn, usedPrefix, text }) => {
     );
   }
 };
-
 handler.help = ['cuaca <kota>'];
 handler.tags = ['info'];
 handler.command = /^cuaca$/i;

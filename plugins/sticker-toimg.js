@@ -5,7 +5,9 @@ import fs from 'fs'
 let handler = async (m, { conn, usedPrefix, command }) => {
   const notStickerMessage = `Reply sticker dengan command *${usedPrefix + command}*`;
 
-  if (!m.quoted) throw notStickerMessage;
+  if (!m.quoted) conn.sendMessage(m.chat,{
+    text : notStickerMessage
+  } )
 
   const q = m.quoted || m;
   const mime = q.mimetype || '';

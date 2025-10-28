@@ -8,7 +8,9 @@ let handler = async (m, { conn, command, text }) => {
     })
     return
   }
-
+await conn.sendMessage(m.chat,{
+  text : `Sticker untuk *${text}* sedang di proses...`
+})
   try {
     let end = '/api/image/brat?text='
     if (/vid|video/i.test(command)) {

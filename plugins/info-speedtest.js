@@ -5,15 +5,19 @@ import os from 'os'
 const exec = promisify(execCallback)
 
 const handler = async (m, { conn }) => {
-    await m.reply('*Sedang mengukur kecepatan internet...*\n\nMohon tunggu sebentar, proses ini membutuhkan waktu sekitar 30-60 detik.')
-
+    // await m.reply('*Sedang mengukur kecepatan internet...*\n\nMohon tunggu sebentar, proses ini membutuhkan waktu sekitar 30-60 detik.')
+    await conn.sendMessage(m.chat,{
+        text: "*Sedang mengukur kecepatan internet...*\n\nMohon tunggu sebentar, proses ini membutuhkan waktu sekitar 30-60 detik."
+    })
     try {
         const isWindows = os.platform() === 'win32'
         const pythonCmd = isWindows ? 'python' : 'python3'
         const command = `${pythonCmd} speed.py --share --secure`
 
         const { stdout } = await exec(command)
-        await m.reply(stdout.trim())
+        await conn.sendMessage(m.chat,{
+            text : `${stdout.trim()}`
+        }) 
     } catch (error) {
         console.error('Speedtest error:', error)
 
