@@ -37,6 +37,7 @@
 //     let url = null;
 //     let width = DEFAULT_WIDTH;
 
+<<<<<<< HEAD
 //     if (text && text.includes('|')) {
 //       const parts = text.split('|').map(s => s.trim());
 //       url = parts[0] || null;
@@ -91,6 +92,17 @@
 //     }, { quoted: m });
 //   }
 // };
+=======
+async function fetchImageBufferFromUrl(url) {
+  const res = await axios.get(url, { responseType: 'arraybuffer', timeout: 20000 });
+  return Buffer.from(res.data);
+}
+sdfsdf
+let handler = async (m, { conn, text, usedPrefix, command }) => {
+  try {
+    let url = null;
+    let width = DEFAULT_WIDTH;
+>>>>>>> 24c4c6a430a3f9005482bffdf2eb4d39623abce5
 
 // handler.help = ['img2ascii <url>|<width>', 'img2ascii <width> (reply image)'];
 // handler.tags = ['tools', 'fun'];
