@@ -44,6 +44,7 @@
           "@whiskeysockets/baileys": "^7.0.0-rc.3",
           "awesome-phonenumber": "^3.4.0",
           "axios": "^1.12.2",
+          "buttons-warpper": "^1.2.0",
           "cfonts": "^2.10.0",
           "chalk": "^5.1.0",
           "cheerio": "1.0.0-rc.12",
@@ -65,9 +66,11 @@
           "node-webpmux": "^3.2.0",
           "ocr-space-api-wrapper": "^2.3.0",
           "pdf-lib": "^1.17.1",
+          "pdf-parse": "^2.4.5",
           "sharp": "^0.34.4",
           "similarity": "^1.2.1",
           "syntax-error": "^1.4.0",
+          "translate-google": "^1.5.0",
           "yargs": "^17.1.1",
           "yt-search": "^2.10.4"
      }
