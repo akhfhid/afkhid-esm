@@ -3,7 +3,6 @@ import fs from "fs";
 import path from "path";
 import { exec } from "child_process";
 
-/* ---------- helper ---------- */
 const fmtSize = (bytes) => {
   const mb = bytes / 1024 / 1024;
   return mb < 1 ? `${(bytes / 1024).toFixed(2)} KB` : `${mb.toFixed(2)} MB`;
