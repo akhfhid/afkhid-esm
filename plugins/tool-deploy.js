@@ -184,7 +184,7 @@ let handler = async (m, { conn }) => {
       {
         text: "❌ Server Error, gagal deploy",
         footer: "Deploy error",
-        buttons: [{ id: "deploy_retry", text: "Coba Lagi" }],
+        // buttons: [{ id: "deploy_retry", text: "Coba Lagi" }],
       },
       { quoted: m }
     );
