@@ -1,59 +1,73 @@
-/* ---------- SaveWeb2ZIP – kloning situs ke ZIP ---------- */
-import axios from "axios";
+// file: handler-web2zip-local.js
+import scrape from 'website-scraper';
+import path from 'path';
+import fs from 'fs';
+import AdmZip from 'adm-zip';
+import { fileURLToPath } from 'url';
 
-const handler = async (m, { conn, usedPrefix, text }) => {
-  const url = text?.trim();
-  if (!url) {
-    return conn.sendMessage(
-      m.chat,
-      { text: `*Contoh:*\n${usedPrefix}clone https://bprcianjur.co.id` },
-      { quoted: m }
-    );
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const tmpBase = path.join(__dirname, '..', 'tmp_web2zip');   // folder kerja
+
+let handler = async (m, { conn }) => {
+  const args = m.text.trim().split(/\s+/);
+  const target = args[0] || '';
+  if (!/^https?:\/\//.test(target)) {
+    return await conn.sendButtons(m.chat, {
+      text: 'Berikan URL yang valid.\nContoh: *.web2zip https://example.com*',
+      footer: '© afkhid-esm',
+      buttons: [{ name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: 'Coba lagi', id: '.web2zip' }) }]
+    }, { quoted: m });
   }
 
-  await conn.sendMessage(
-    m.chat,
-    { text: "⏳ Mengkloning situs…" },
-    { quoted: m }
-  );
+  await conn.sendMessage(m.chat, { text: '🕒 Sedang mirroring… (bisa 10-60 detik)' }, { quoted: m });
+
+  const jobId = 'web_' + Date.now();
+  const outDir = path.join(tmpBase, jobId);
+  const zipPath = path.join(tmpBase, jobId + '.zip');
 
   try {
-    const { data } = await axios.get(
-      "https://api.nekolabs.my.id/discovery/saveweb2zip",
-      { params: { url }, timeout: 60_000 }
-    );
+    // 1. scrape
+    await scrape({
+      urls: [target],
+      directory: outDir,
+      subdirectories: [{ directory: 'img', extensions: ['.jpg', '.png', '.svg', '.webp', '.gif'] },
+      { directory: 'css', extensions: ['.css'] },
+      { directory: 'js', extensions: ['.js'] }],
+      sources: [{ selector: 'img', attr: 'src' },
+      { selector: 'link', attr: 'href' },
+      { selector: 'script', attr: 'src' },
+      { selector: 'source', attr: 'srcset' }],
+      urlFilter: (url) => url.startsWith(target), // stay on origin
+      request: { timeout: 30000 }
+    });
 
-    if (!data.success || !data.result?.downloadUrl)
-      throw new Error(data.result?.error?.text || "Gagal mengkloning situs.");
+    // 2. zip
+    const zip = new AdmZip();
+    zip.addLocalFolder(outDir);
+    zip.writeZip(zipPath);
 
-    const { downloadUrl, copiedFilesAmount } = data.result;
+    // 3. kirim
+    await conn.sendMessage(m.chat, {
+      document: { url: zipPath },
+      fileName: `${new URL(target).hostname}.zip`,
+      mimetype: 'application/zip',
+      caption: `✅ Mirror selesai!\n📦 Ukuran: ${(fs.statSync(zipPath).size / 1024 / 1024).toFixed(2)} MB`
+    }, { quoted: m });
 
-    await conn.sendMessage(
-      m.chat,
-      {
-        document: { url: downloadUrl },
-        fileName: `clone_${Date.now()}.zip`,
-        mimetype: "application/zip",
-        caption:
-          `✅ *Kloning selesai*\n` +
-          `📂 File dikloning: ${copiedFilesAmount}\n` +
-          `📥 Unduhan: ${downloadUrl}\n\n` +
-          `© afkhid-esm`,
-      },
-      { quoted: m }
-    );
   } catch (e) {
-    await conn.sendMessage(
-      m.chat,
-      { text: `❌ ${e.message || "Gagal memproses permintaan."}` },
-      { quoted: m }
-    );
+    console.error(e);
+    await conn.sendButtons(m.chat, {
+      text: '❌ ' + e.message,
+      footer: '© afkhid-esm',
+      buttons: [{ name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: 'Coba lagi', id: '.web2zip' }) }]
+    }, { quoted: m });
+  } finally {
+    // bersihkan
+    fs.rmSync(outDir, { recursive: true, force: true });
+    if (fs.existsSync(zipPath)) fs.unlinkSync(zipPath);
   }
 };
 
-handler.help = ["web2zip <url>"];
-handler.tags = ["tools"];
-handler.command = /^web2zip$/i;
-
-
-export default handler;
+handler.help = ['web2zip'];
+handler.tags = ['tools'];
+handler.command = ['web2zip', 'w2z'];
