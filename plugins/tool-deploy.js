@@ -4,7 +4,6 @@ import { exec } from "child_process";
 
 let handler = async (m, { conn }) => {
   try {
-    /* ===== sama persis dengan kode-mu ===== */
     let fileBuffer, filename;
     if (m.quoted && m.quoted.message && m.quoted.message.documentMessage) {
       fileBuffer = await m.quoted.download();
@@ -16,7 +15,7 @@ let handler = async (m, { conn }) => {
       return await conn.sendMessage(
         m.chat,
         {
-          text: "⚠️ Reply atau kirim file archive (.zip, .rar, .7z, .tar.gz, .tar.bz2) dengan command *.deploy*",
+          text: " Reply atau kirim file archive (.zip, .rar, .7z, .tar.gz, .tar.bz2) dengan command *.deploy*",
         },
         { quoted: m }
       );
@@ -36,7 +35,7 @@ let handler = async (m, { conn }) => {
       return await conn.sendMessage(
         m.chat,
         {
-          text: "⚠️ Format file tidak didukung. Gunakan .zip, .rar, .7z, .tar.gz, .tar.bz2",
+          text: " Format file tidak didukung. Gunakan .zip, .rar, .7z, .tar.gz, .tar.bz2",
         },
         { quoted: m }
       );
@@ -56,7 +55,6 @@ let handler = async (m, { conn }) => {
     const tempFile = path.join(uploadsDir, tempName + ext);
     fs.writeFileSync(tempFile, fileBuffer);
 
-    /* ===== 1. extract ke tempat sementara ===== */
     const tmpExtract = path.join(uploadsDir, tempName); // /webuser/deploy_123456
     fs.mkdirSync(tmpExtract, { recursive: true });
 
@@ -78,16 +76,14 @@ let handler = async (m, { conn }) => {
         );
       }
 
-      fs.unlinkSync(tempFile); // hapus archive
+      fs.unlinkSync(tempFile); 
 
-      /* ===== 2. ambil folder paling dalam ===== */
       let deepest = tmpExtract;
       function findDeep(dir) {
         const list = fs.readdirSync(dir, { withFileTypes: true });
         for (const d of list) {
           if (d.isDirectory()) {
             const sub = path.join(dir, d.name);
-            // kalau sudah ada index.* di dalamnya, itu targetnya
             if (
               fs.readdirSync(sub).some((f) => /^index\.(html|php)$/i.test(f))
             ) {
@@ -127,7 +123,7 @@ let handler = async (m, { conn }) => {
     console.error(err);
     await conn.sendMessage(
       m.chat,
-      { text: "❌ Gagal deploy, ada error di server" },
+      { text: " Gagal deploy, ada error di server" },
       { quoted: m }
     );
   }
