@@ -145,12 +145,12 @@ let handler = async (m, { conn }) => {
           `🚀 Status  : Online & Live\n` +
           `👨‍💻 Uploader: ${uploader}\n` +
           `⏳ Deployed: ${timeStr} - ${dateStr}\n\n` +
-          `*Powered by (c) afkhid-esm*`;
+          `*Powered by © afkhid-esm*`;
 
         await conn.sendButtons(
           m.chat,
           {
-            title: "✅ *DEPLOYMENT SUCCESS*",
+            title: "*DEPLOYMENT SUCCESS*",
             text: caption,
             footer: "© afkhid-esm",
             buttons: [
