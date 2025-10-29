@@ -42,6 +42,7 @@
           "@hapi/hoek": "^11.0.7",
           "@vitalets/google-translate-api": "^9.2.0",
           "@whiskeysockets/baileys": "^7.0.0-rc.3",
+          "adm-zip": "^0.5.16",
           "awesome-phonenumber": "^3.4.0",
           "axios": "^1.12.2",
           "buttons-warpper": "^1.2.0",
@@ -71,6 +72,7 @@
           "similarity": "^1.2.1",
           "syntax-error": "^1.4.0",
           "translate-google": "^1.5.0",
+          "website-scraper": "^5.3.1",
           "yargs": "^17.1.1",
           "yt-search": "^2.10.4"
      }
