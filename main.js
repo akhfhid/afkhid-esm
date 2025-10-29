@@ -12,7 +12,7 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 // process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1';
 
 import './config.js'
-
+import {initFunction} from "buttons-warpper";
 import path, { join } from 'path'
 import { platform } from 'process'
 import { fileURLToPath, pathToFileURL } from 'url'
@@ -140,6 +140,7 @@ const connectionOptions = {
 }
 
 global.conn = makeWASocket(connectionOptions)
+await initFunction(global.conn);   
 conn.isInit = false
 
 if (!conn.authState.creds.registered) {

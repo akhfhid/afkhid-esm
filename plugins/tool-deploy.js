@@ -1,21 +1,33 @@
+// file: handler-deploy.js
 import fs from "fs";
 import path from "path";
 import { exec } from "child_process";
 
+/* ---------- helper ---------- */
+const fmtSize = (bytes) => {
+  const mb = bytes / 1024 / 1024;
+  return mb < 1 ? `${(bytes / 1024).toFixed(2)} KB` : `${mb.toFixed(2)} MB`;
+};
+const fmtTime = (ms) => (ms / 1000).toFixed(2) + " sec";
+const pad = (n) => n.toString().padStart(2, "0");
+
 let handler = async (m, { conn }) => {
+  const start = Date.now(); // 
   try {
     let fileBuffer, filename;
-    if (m.quoted && m.quoted.message && m.quoted.message.documentMessage) {
+    if (m.quoted?.message?.documentMessage) {
       fileBuffer = await m.quoted.download();
       filename = m.quoted.message.documentMessage.fileName;
-    } else if (m.message && m.message.documentMessage) {
+    } else if (m.message?.documentMessage) {
       fileBuffer = await m.download();
       filename = m.message.documentMessage.fileName;
     } else {
-      return await conn.sendMessage(
+      return await conn.sendButtons(
         m.chat,
         {
-          text: " Reply atau kirim file archive (.zip, .rar, .7z, .tar.gz, .tar.bz2) dengan command *.deploy*",
+          text: "Kirim file archive .zip lalu ketik *.deploy*",
+          footer: "© afkhid-esm",
+          // buttons: [{ id: "deploy_help", text: "Cara pakai" }],
         },
         { quoted: m }
       );
@@ -32,20 +44,16 @@ let handler = async (m, { conn }) => {
       ".tbz2",
     ];
     if (!validExts.includes(ext)) {
-      return await conn.sendMessage(
+      return await conn.sendButtons(
         m.chat,
         {
-          text: " Format file tidak didukung. Gunakan .zip, .rar, .7z, .tar.gz, .tar.bz2",
+          text: "Format file tidak didukung! Gunakan format .zip",
+          footer: "© afkhid-esm",
+          // buttons: [{ id: "deploy_retry", text: "Coba Lagi" }],
         },
         { quoted: m }
       );
     }
-
-    await conn.sendMessage(
-      m.chat,
-      { text: "⏳ Sedang memproses deploy... tunggu sebentar" },
-      { quoted: m }
-    );
 
     const uploadsDir = "/home/proxy_ubuntu/Public/afkhid-esm/webuser";
     if (!fs.existsSync(uploadsDir))
@@ -54,8 +62,9 @@ let handler = async (m, { conn }) => {
     const tempName = `deploy_${Date.now()}`;
     const tempFile = path.join(uploadsDir, tempName + ext);
     fs.writeFileSync(tempFile, fileBuffer);
+    const fileSize = fileBuffer.length; 
 
-    const tmpExtract = path.join(uploadsDir, tempName); // /webuser/deploy_123456
+    const tmpExtract = path.join(uploadsDir, tempName);
     fs.mkdirSync(tmpExtract, { recursive: true });
 
     let cmd = "";
@@ -68,62 +77,115 @@ let handler = async (m, { conn }) => {
       cmd = `tar -xjf ${tempFile} -C ${tmpExtract}`;
 
     exec(cmd, async (err) => {
-      if (err) {
-        return await conn.sendMessage(
+      try {
+        if (err) throw new Error("Gagal extract: " + err.message);
+        fs.unlinkSync(tempFile);
+
+        let deepest = tmpExtract;
+        function findDeep(dir) {
+          const list = fs.readdirSync(dir, { withFileTypes: true });
+          for (const d of list) {
+            if (d.isDirectory()) {
+              const sub = path.join(dir, d.name);
+              if (
+                fs.readdirSync(sub).some((f) => /^index\.(html|php)$/i.test(f))
+              ) {
+                deepest = sub;
+                return;
+              }
+              findDeep(sub);
+            }
+          }
+        }
+        findDeep(tmpExtract);
+        const lastFolderName = path.basename(deepest);
+
+        let targetDir = path.join(uploadsDir, lastFolderName);
+        let count = 1;
+        while (fs.existsSync(targetDir)) {
+          targetDir = path.join(uploadsDir, `${lastFolderName}-v${count}`);
+          count++;
+        }
+        fs.renameSync(deepest, targetDir);
+        fs.rmSync(tmpExtract, { recursive: true, force: true });
+
+        const elapsed = Date.now() - start;
+        const now = new Date();
+        const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(
+          now.getSeconds()
+        )}`;
+        const dateStr = `${now.getDate()} ${
+          [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
+          ][now.getMonth()]
+        } ${now.getFullYear()}`;
+
+        const subdomain = path.basename(targetDir);
+        const url = `https://${subdomain}.akhfhid.my.id`;
+        const uploader = "+" + m.sender.replace(/\D/g, "");
+
+        const caption =
+          `📂 Project : ${subdomain}\n` +
+          `🌍 Domain  : ${url}\n` +
+          `📦 Size    : ${fmtSize(fileSize)}\n` +
+          `⚡ Speed   : ${fmtTime(elapsed)}\n` +
+          `🛠 Runtime : Ubuntu 22.04 • Nginx Active\n` +
+          `────────────────────────\n` +
+          `🚀 Status  : Online & Live\n` +
+          `👨‍💻 Uploader: ${uploader}\n` +
+          `⏳ Deployed: ${timeStr} - ${dateStr}\n\n` +
+          `*Powered by (c) afkhid-esm*`;
+
+        await conn.sendButtons(
           m.chat,
-          { text: "❌ Gagal extract: " + err.message },
+          {
+            title: "✅ *DEPLOYMENT SUCCESS*",
+            text: caption,
+            footer: "© afkhid-esm",
+            buttons: [
+              {
+                name: "cta_url",
+                buttonParamsJson: JSON.stringify({
+                  display_text: "🌐 Kunjungi Website",
+                  url,
+                }),
+              },
+              // { id: "deploy_done", text: "Selesai" },
+            ],
+          },
+          { quoted: m }
+        );
+      } catch (e) {
+        await conn.sendButtons(
+          m.chat,
+          {
+            text: "❌ " + e.message,
+            footer: "© afkhid-esm",
+            // buttons: [{ id: "deploy_retry", text: "Coba Lagi" }],
+          },
           { quoted: m }
         );
       }
-
-      fs.unlinkSync(tempFile); 
-
-      let deepest = tmpExtract;
-      function findDeep(dir) {
-        const list = fs.readdirSync(dir, { withFileTypes: true });
-        for (const d of list) {
-          if (d.isDirectory()) {
-            const sub = path.join(dir, d.name);
-            if (
-              fs.readdirSync(sub).some((f) => /^index\.(html|php)$/i.test(f))
-            ) {
-              deepest = sub;
-              return;
-            }
-            findDeep(sub);
-          }
-        }
-      }
-      findDeep(tmpExtract);
-      const lastFolderName = path.basename(deepest); 
-
-      let targetDir = path.join(uploadsDir, lastFolderName);
-      let count = 1;
-      while (fs.existsSync(targetDir)) {
-        targetDir = path.join(uploadsDir, `${lastFolderName}-v${count}`);
-        count++;
-      }
-      fs.renameSync(deepest, targetDir); 
-      fs.rmSync(tmpExtract, { recursive: true, force: true }); 
-
-      const url = `https://${path.basename(targetDir)}.akhfhid.my.id`;
-      return await conn.sendMessage(
-        m.chat,
-        {
-          text:
-            `✅ Deploy berhasil!\n\n` +
-            `📁 Folder: ${path.basename(targetDir)}\n` +
-            `🌍 URL: ${url}\n` +
-            `📦 File archive sudah dihapus otomatis ✅`,
-        },
-        { quoted: m }
-      );
     });
   } catch (err) {
-    console.error(err);
-    await conn.sendMessage(
+    await conn.sendButtons(
       m.chat,
-      { text: " Gagal deploy, ada error di server" },
+      {
+        text: "❌ Server Error, gagal deploy",
+        footer: "Deploy error",
+        buttons: [{ id: "deploy_retry", text: "Coba Lagi" }],
+      },
       { quoted: m }
     );
   }
