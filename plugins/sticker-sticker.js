@@ -3,7 +3,7 @@ let handler = async (m, { conn, args, text, usedPrefix, command }) => {
   let mime = (q.msg || q).mimetype || ''
 
   if (!/image|video|webp/.test(mime)) {
-    return m.reply('Reply gambar, video atau stiker untuk membuat sticker.')
+    return await conn.sendMessage(m.chat,{text:'Reply gambar, video atau stiker untuk membuat sticker.'})
   }
 
   if (/image|video|webp/.test(mime)) {

@@ -1,7 +1,6 @@
 import fetch from "node-fetch";
 
 const handler = async (m, { text, usedPrefix, command, conn }) => {
-  // if (!text) throw `Mana textnya?`
   if (!text)
     await conn.sendMessage(m.chat, {
       text: "Cara Pakai : .wormgpt Buatkan aku script ddos sederhana menggunakan python",

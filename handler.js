@@ -24,6 +24,77 @@ export async function handler(chatUpdate) {
     m.exp = 0;
     m.limit = 0;
 
+    // di awal handler.js
+    if (m.isInteractive && m.type === "single_select") {
+      const selectedId = m.selectedId || m.response?.id;
+      if (selectedId && selectedId.startsWith("menulist ")) {
+        const tag = selectedId.replace("menulist ", "");
+        const commandsList =
+          groups[tag]
+            ?.map((p) => p.help.map((h) => _p + h).join("\n"))
+            .join("\n") || "Tidak ada perintah.";
+
+        // disable link preview supaya error match hilang
+        await conn.sendMessage(m.chat, {
+          text: `*┌─「 ${tags[tag]} 」*\n${commandsList}`,
+          linkPreview: false,
+        });
+        return;
+      }
+    }
+if (m.isInteractive) {
+  const selectedId =
+    m.selectedId ||
+    m.response?.id ||
+    m?.message?.templateButtonReplyMessage?.selectedId;
+  if (selectedId && selectedId.startsWith("menulist ")) {
+    const tag = selectedId.split(" ")[1];
+    const tagsMap = {
+      main: "Main",
+      ai: "Ai",
+      stalk: "Stalk",
+      downloader: "Downloader",
+      internet: "Internet",
+      anime: "Anime",
+      sticker: "Sticker",
+      tools: "Tools",
+      group: "Group",
+      info: "Info",
+      owner: "Owner",
+    };
+
+    const plugins = Object.values(global.plugins).filter(
+      (p) => !p.disabled && p.tags && p.tags.includes(tag)
+    );
+
+    if (!plugins.length) {
+      await this.sendMessage(
+        m.chat,
+        { text: "Tidak ada perintah di kategori ini.", linkPreview: false },
+        { quoted: m }
+      );
+      return;
+    }
+
+    const cleanHelp = (cmd) =>
+      cmd
+        .replace(/^\/\^.*?\$\/[gimuy]*\//, "")
+        .split("|")[0]
+        .trim();
+
+    const list = plugins
+      .map((p) => p.help.map((h) => `⫸ .${cleanHelp(h)}`).join("\n"))
+      .join("\n");
+
+    await this.sendMessage(
+      m.chat,
+      { text: `*${tagsMap[tag]}*\n\n${list}`, linkPreview: false },
+      { quoted: m }
+    );
+    return;
+  }
+}
+
     /* ---------- jawaban tombol kategori (menulist) ---------- */
     if (m?.message?.templateButtonReplyMessage) {
       const id = m.message.templateButtonReplyMessage.selectedId;

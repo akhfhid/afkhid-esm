@@ -162,7 +162,29 @@ let handler = async (m, { conn, usedPrefix: _p, __dirname, args, command }) => {
         return `${catHeader}\n${catBody}\n${defaultMenu.footer}`;
       }),
     ].join("\n");
+    // Contoh: menulist ai
+    if (command === "menulist" && args[0]) {
+      const tag = args[0].toLowerCase();
+      if (!tags[tag]) return m.reply("Kategori tidak ditemukan!");
 
+      const list = groups[tag]
+        .map((p) =>
+          p.help
+            .map(
+              (h) => `• ${_p + h} ${p.premium ? "Ⓟ" : ""}${p.limit ? "Ⓛ" : ""}`
+            )
+            .join("\n")
+        )
+        .join("\n");
+
+      const text = `╭───『 *${tags[tag]}* 』\n${
+        list || "Tidak ada perintah."
+      }\n╰–––––––––––––––༓`;
+      // return m.reply(text);
+      return await conn.sendMessage(m.chat, {
+        text : text
+      })
+    }
     const text = menuText.replace(
       new RegExp(
         `%(${Object.keys(replace)
@@ -173,13 +195,35 @@ let handler = async (m, { conn, usedPrefix: _p, __dirname, args, command }) => {
       (_, name) => replace[name]
     );
     if (!m.isBaileys && !m.fromMe) {
-      const interactiveButtons = Object.keys(tags).map((tag) => ({
-        name: "quick_reply",
-        buttonParamsJson: JSON.stringify({
-          display_text: tags[tag],
-          id: `menulist ${tag}`,
-        }),
-      }));
+      const interactiveButtons = [
+        // Quick Reply Buttons (per kategori)
+        ...Object.keys(tags).map((tag) => ({
+          name: "quick_reply",
+          buttonParamsJson: JSON.stringify({
+            display_text: tags[tag],
+            id: `menulist ${tag}`,
+          }),
+        })),
+
+        // Single Select Dropdown (semua kategori dalam satu dropdown)
+        {
+          name: "single_select",
+          buttonParamsJson: JSON.stringify({
+            title: "Pilih Kategori",
+            sections: [
+              {
+                title: "Daftar Kategori",
+                highlight_label: "Paling Populer", // opsional
+                rows: Object.keys(tags).map((tag) => ({
+                  id: `menulist ${tag}`,
+                  title: tags[tag],
+                  description: `Lihat perintah di kategori ${tags[tag]}`,
+                })),
+              },
+            ],
+          }),
+        },
+      ];
 
       await sendInteractiveMessage(conn, m.chat, {
         image: { url: "https://telegra.ph/file/666ccbfc3201704454ba5.jpg" },
@@ -189,35 +233,18 @@ let handler = async (m, { conn, usedPrefix: _p, __dirname, args, command }) => {
 │ • Limit  : ${limit}
 │ • Role   : ${role}
 └───────────────⬣`,
-        footer: `Tap kategori di bawah untuk melihat perintah.\n${global.wm}`,
+        footer: `Tap tombol di bawah untuk navigasi.\n© afkhid-esm`,
         interactiveButtons,
       });
       return;
     }
-
-    // --------- Menulist per kategori ----------
-    if (command.includes("menulist")) {
-      const tag = args[0] || "main";
-      if (!tags[tag]) return conn.reply(m.chat, "Kategori tidak ditemukan.", m);
-
-      const list =
-        groups[tag]
-          ?.map((p) => p.help.map((h) => `memeks ${_p}${h}`).join("\n"))
-          .join("\n") || "Tidak ada perintah.";
-
-      await sendInteractiveMessage(conn, m.chat, {
-        text: `*┌─「 ${tags[tag]} 」*
-│ • Total : ${groups[tag]?.length || 0} perintah
-└───────────────⬣
-
-${list}`,
-        footer: "Tekan tombol di bawah untuk kembali ke menu utama",
-        interactiveButtons: mainMenuButton,
-      });
-      return;
-    }
-    // await sendInteractiveMessage(conn, m.chat)
-    await conn.sendMessage(m.chat, { text }, { quoted: m });
+    await sendInteractiveMessage(conn, m.chat, {
+      // image: { url: "https://telegra.ph/file/666ccbfc3201704454ba5.jpg" },
+      text: headerText,
+      footer: `Tap tombol di bawah untuk navigasi.\n© afkhid-esm`,
+      interactiveButtons,
+    });
+    // await conn.sendMessage(m.chat, { text }, { quoted: m });
   } catch (e) {
     conn.reply(m.chat, "Maaf, menu sedang error ⚠️", m);
     console.error(e);

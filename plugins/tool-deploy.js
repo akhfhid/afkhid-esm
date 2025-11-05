@@ -26,7 +26,7 @@ let handler = async (m, { conn }) => {
         {
           text: "Kirim file archive .zip lalu ketik *.deploy*",
           footer: "© afkhid-esm",
-          // buttons: [{ id: "deploy_help", text: "Cara pakai" }],
+          buttons: [{ id: "deploy_help", text: "Cara pakai" }],
         },
         { quoted: m }
       );
@@ -48,7 +48,7 @@ let handler = async (m, { conn }) => {
         {
           text: "Format file tidak didukung! Gunakan format .zip",
           footer: "© afkhid-esm",
-          // buttons: [{ id: "deploy_retry", text: "Coba Lagi" }],
+          buttons: [{ id: `".deploy"`, text: "Coba Lagi" }],
         },
         { quoted: m }
       );
@@ -171,7 +171,7 @@ let handler = async (m, { conn }) => {
           {
             text: "❌ " + e.message,
             footer: "© afkhid-esm",
-            // buttons: [{ id: "deploy_retry", text: "Coba Lagi" }],
+            buttons: [{ id: "deploy_retry", text: "Coba Lagi" }],
           },
           { quoted: m }
         );
@@ -183,7 +183,7 @@ let handler = async (m, { conn }) => {
       {
         text: "❌ Server Error, gagal deploy",
         footer: "Deploy error",
-        // buttons: [{ id: "deploy_retry", text: "Coba Lagi" }],
+        buttons: [{ id: "deploy_retry", text: "Coba Lagi" }],
       },
       { quoted: m }
     );
