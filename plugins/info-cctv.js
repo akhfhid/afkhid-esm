@@ -1,11 +1,10 @@
 import fs from "fs";
 import path from "path";
+import initFunction from "buttons-warpper";
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const cctvPath = path.join(__dirname, "..", "cctv.json");
 const cctvData = JSON.parse(fs.readFileSync(cctvPath, "utf-8"));
-
-const chunkSize = 24;
 
 function cleanURL(url) {
   return encodeURI(url.trim());
@@ -13,24 +12,36 @@ function cleanURL(url) {
 
 let handler = async (m, { conn }) => {
   try {
-    for (let i = 0; i < cctvData.length; i += chunkSize) {
-      const slice = cctvData.slice(i, i + chunkSize);
-      const text =
-        `📹 *CCTV Bandung (${i + 1}-${Math.min(
-          i + chunkSize,
-          cctvData.length
-        )})*\n\n` +
-        slice
-          .map((c, idx) => {
-            const maps = `https://www.google.com/maps?q=${c.lat},${c.lng}`;
-            const stream = cleanURL(c.stream_cctv);
-            return `${i + idx + 1}. *${c.cctv_name}*\n📍 ${maps}\n🔗 ${stream}`;
-          })
-          .join("\n\n");
+    if (!conn.sendInteractiveMessage) await initFunction(conn);
 
-      await conn.sendMessage(m.chat, { text }, { quoted: i === 0 ? m : null });
-      await new Promise((r) => setTimeout(r, 700));
-    }
+    const rows = cctvData.map((c, idx) => {
+      const maps = `https://www.google.com/maps?q=${c.lat},${c.lng}`;
+      const stream = cleanURL(c.stream_cctv);
+      return {
+        header: `${idx + 1}.`,
+        title: c.cctv_name,
+        description: `${maps}\n${stream}`,
+        id: `cctv_${idx}`,
+      };
+    });
+    await conn.sendInteractiveMessage(
+      m.chat,
+      {
+        title: "*CCTV BANDUNG*",
+        text: `Total ${cctvData.length} titik CCTV tersedia.\nSilahkan klik button untuk melihat list cctv`,
+        footer: "© afkhid-esm",
+        interactiveButtons: [
+          {
+            name: "single_select",
+            buttonParamsJson: JSON.stringify({
+              title: "Pilih CCTV",
+              sections: [{ title: "Daftar CCTV", rows }],
+            }),
+          },
+        ],
+      },
+      { quoted: m }
+    );
   } catch (e) {
     m.reply("❌ Error: " + e.message);
   }
