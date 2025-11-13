@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import initFunction from "buttons-warpper";
+import {initFunction} from "buttons-warpper";
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const cctvPath = path.join(__dirname, "..", "cctv.json");
@@ -18,9 +18,9 @@ let handler = async (m, { conn }) => {
       const maps = `https://www.google.com/maps?q=${c.lat},${c.lng}`;
       const stream = cleanURL(c.stream_cctv);
       return {
-        header: `${idx + 1}.`,
-        title: c.cctv_name,
-        description: `${maps}\n${stream}`,
+        header: `Bandung.`,
+        title: `\n*${idx + 1}. ${c.cctv_name}*`,
+        description: `\nLoc : ${maps}\nLink : ${stream}`,
         id: `cctv_${idx}`,
       };
     });

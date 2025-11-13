@@ -1,42 +1,131 @@
-// Update By Xnuvers007
+import axios from "axios";
+import {
+  prepareWAMessageMedia,
+  generateWAMessageFromContent,
+} from "@whiskeysockets/baileys";
 
-import fetch from 'node-fetch'
+const BASE = "https://www.sankavollerei.com/comic";
+const MAX_SEARCH = 10;
+const MAX_CHAP = 30;
 
-var handler = async (m, { conn, text }) => {
-    if (!text) throw `*Masukan Judul Manga Yang Ingin Kamu Cari !*`
-    conn.reply(m.chat, 'Sedang mencari manga... Silahkan tunggu', m)
-    let res = await fetch('https://api.jikan.moe/v4/manga?q=' + text)
-    if (!res.ok) throw 'Tidak Ditemukan'
-    let json = await res.json()
-    let { chapters, url, type, score, scored, scored_by, rank, popularity, members, background, status, volumes, synopsis, favorites } = json.data[0]
-    let judul = json.data[0].titles.map(jud => `${jud.title} [${jud.type}]`).join('\n');
-    let xnuvers007 = json.data[0].authors.map(Xnuvers007 => `${Xnuvers007.name} (${Xnuvers007.url})`).join('\n');
-    let genrenya = json.data[0].genres.map(xnvrs007 => `${xnvrs007.name}`).join('\n');
+const clean = (str = "") => str.replace(/\*/g, "").trim();
 
-    let animeingfo = `📚 Title: ${judul}
-📑 Chapter: ${chapters}
-✉️ Transmisi: ${type}
-🗂 Status: ${status}
-😎 Genre: ${genrenya}
-🗃 Volumes: ${volumes}
-🌟 Favorite: ${favorites}
-🧮 Score: ${score}
-🧮 Scored: ${scored}
-🧮 Scored BY: ${scored_by}
-🌟 Rank: ${rank}
-🤩 Popularitas: ${popularity}
-👥 Members: ${members}
-⛓️ Url: ${url}
-👨‍🔬 Author: ${xnuvers007}
-📝 Background: ${background}
-💬 Sinopsis: ${synopsis}
-`
-    conn.sendFile(m.chat, json.data[0].images.jpg.image_url, 'manga.jpg', `*MANGA INFO*\n` + animeingfo, m)
-}
-handler.help = ['mangainfo <manga>']
-handler.tags = ['anime']
-handler.command = /^(mangainfo)$/i
+const handler = async (m, { conn, usedPrefix, text }) => {
+  if (!text) {
+    if (!m?.chat) return;
+    return conn.sendMessage(m.chat, { text: `*Contoh:*\n${usedPrefix}manga nano machine` });
+  }
 
-handler.register = true
+  try {
+    const { data: sRes } = await axios.get(
+      `${BASE}/bacakomik/search/${encodeURIComponent(text)}`,
+      { timeout: 15000 }
+    );
+    if (!sRes.success || !sRes.komikList?.length) {
+      throw new Error("Judul tidak ditemukan.");
+    }
 
-export default handler
+    const cards = [];
+    for (let i = 0; i < Math.min(sRes.komikList.length, MAX_SEARCH); i++) {
+      const k = sRes.komikList[i];
+      const img = await prepareWAMessageMedia(
+        { image: { url: k.cover } },
+        { upload: conn.waUploadToServer }
+      );
+
+      cards.push({
+        header: {
+          hasMediaAttachment: true,
+          imageMessage: img.imageMessage,
+        },
+        body: { text: `*${clean(k.title)}*\nRating: ${k.rating} ⭐` },
+        footer: { text: "Tap tombol di bawah untuk melihat chapter" },
+        nativeFlowMessage: {
+          buttons: [
+            {
+              name: "quick_reply",
+              buttonParamsJson: JSON.stringify({
+                display_text: "📖 Daftar Chapter",
+                id: `manga_chapter|${k.slug}`,
+              }),
+            },
+          ],
+        },
+      });
+    }
+
+    // --- PERUBAHAN: buat interactiveMessage langsung (jangan pakai viewOnceMessage) ---
+    const content = {
+      interactiveMessage: {
+        body: { text: `Hasil pencarian *"${text}"*` },
+        footer: { text: "© afkhid-esm" },
+        carouselMessage: { cards },
+      },
+    };
+
+    const searchMsg = generateWAMessageFromContent(m.chat, content, {});
+    await conn.relayMessage(m.chat, searchMsg.message, {
+      messageId: searchMsg.key?.id || null,
+    });
+  } catch (e) {
+    console.error("ERROR handler:", e?.stack ?? e);
+    await conn.sendMessage(m.chat, { text: `❌ ${e.message || String(e)}` });
+  }
+};
+handler.onButton = async (m, { conn, id }) => {
+  try {
+    if (!id?.startsWith?.("manga_chapter|")) return;
+
+    const slug = id.split("|")[1];
+    if (!slug) throw new Error("Slug tidak valid.");
+
+    const { data: dRes } = await axios.get(`${BASE}/bacakomik/detail/${slug}`, {
+      timeout: 15000,
+    });
+    if (!dRes.success) throw new Error("Detail manga tidak ditemukan.");
+
+    const detail = dRes.detail;
+    const chapters = (dRes.chapters || []).slice(0, MAX_CHAP);
+    if (!chapters.length) throw new Error("Belum ada chapter.");
+
+    const rows = chapters.map((c, i) => ({
+      header: "",
+      title: `Ch. ${chapters.length - i}`,
+      description: c.date,
+      id: `manga_read|${c.slug}`,
+    }));
+
+    // ⛔ Jangan pakai quoted sama sekali karena m bukan pesan lengkap
+    const chatId = m?.chat || m?.key?.remoteJid || m?.from || m;
+    if (!chatId) throw new Error("Chat ID tidak ditemukan.");
+
+    await conn.sendMessage(chatId, {
+      interactiveMessage: {
+        body: { text: `Berikut chapter dari *${clean(detail.title)}*` },
+        footer: { text: "© afkhid-esm" },
+        nativeFlowMessage: {
+          buttons: [
+            {
+              name: "single_select",
+              buttonParamsJson: JSON.stringify({
+                title: "📖 Pilih Chapter",
+                sections: [{ title: "Daftar Chapter", rows }],
+              }),
+            },
+          ],
+        },
+      },
+    });
+  } catch (e) {
+    console.error("onButton error:", e);
+    const chatId = m?.chat || m?.key?.remoteJid || m?.from || m;
+    if (chatId)
+      await conn.sendMessage(chatId, { text: `❌ ${e.message || String(e)}` });
+  }
+};
+
+handler.help = ["manga <judul>"];
+handler.tags = ["weebs"];
+handler.command = /^manga$/i;
+
+export default handler;

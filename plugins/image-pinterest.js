@@ -104,8 +104,5 @@ const handler = async (m, { conn, usedPrefix, text }) => {
 handler.help = ["pinterest <kata kunci>"];
 handler.tags = ["internet"];
 handler.command = /^pinterest$/i;
-handler.groupOnly = false;
-handler.privateOnly = false;
-handler.admin = false;
-handler.botAdmin = false;
+
 export default handler;
