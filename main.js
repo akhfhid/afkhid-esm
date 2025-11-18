@@ -345,31 +345,24 @@ global.reloadHandler = async function (restatConn) {
     }
   });
   conn.ev.on("messages.upsert", conn.handler);
-  /* ===== HAPUS / KOMENTARI YANG INI ===== */
-  // conn.ev.on('messages.upsert', conn.handler)
-
-  /* ===== GANTI DENGAN 1 LISTENER LENGKAP ===== */
   conn.ev.on("messages.upsert", async (upsert) => {
     const msg = upsert.messages[0];
     if (!msg.message) return;
-
-    /* WRAP dulu supaya ada .chat, .key, .sender, dll */
     const m = smsg(conn, msg);
-
-    /* 1. Tangani templateButtonReply */
     if (msg.message.templateButtonReplyMessage) {
       const selectedId = msg.message.templateButtonReplyMessage.selectedId;
       if (selectedId && selectedId.startsWith("manga_")) {
         const { default: mangaCmd } = await import("./plugins/anime-manga.js");
         if (mangaCmd.onButton) {
           await mangaCmd.onButton(m, { conn, id: selectedId });
-          return; // stop agar tidak diproses 2x
+          return;
         }
       }
     }
-
-    /* 2. Sisipkan handler utama (karena kita sudah hapus conn.handler) */
-    await conn.handler(upsert);
+    const text = m.text || "";
+    if (text.toLowerCase() === "ping") {
+      await conn.sendMessage(m.chat, { text: "pong" }, { quoted: m });
+    }
   });
   conn.ev.on("group-participants.update", conn.participantsUpdate);
   conn.ev.on("groups.update", conn.groupsUpdate);

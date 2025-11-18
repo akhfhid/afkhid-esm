@@ -54,7 +54,6 @@ const handler = async (m, { conn, usedPrefix, text }) => {
       });
     }
 
-    // --- PERUBAHAN: buat interactiveMessage langsung (jangan pakai viewOnceMessage) ---
     const content = {
       interactiveMessage: {
         body: { text: `Hasil pencarian *"${text}"*` },
@@ -95,7 +94,6 @@ handler.onButton = async (m, { conn, id }) => {
       id: `manga_read|${c.slug}`,
     }));
 
-    // ⛔ Jangan pakai quoted sama sekali karena m bukan pesan lengkap
     const chatId = m?.chat || m?.key?.remoteJid || m?.from || m;
     if (!chatId) throw new Error("Chat ID tidak ditemukan.");
 
