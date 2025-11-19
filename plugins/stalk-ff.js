@@ -2,13 +2,10 @@ import axios from 'axios'
 
 let handler = async (m, { conn, args }) => {
     const userId = args[0]
-
     if (!userId) return await conn.sendMessage(m.chat, 'Masukkan User ID', m)
-
     let { key } = await conn.sendMessage(m.chat, {
         text: "Sedang mengecek data akun...",
     })
-
     try {
         let res = await axios.get(`${APIs.ryzumi}/api/stalk/freefire?userId=${userId}`)
         let result = res.data
@@ -61,12 +58,9 @@ ${equippedItemsText}
         })
     }
 }
-
 handler.help = ['ffstalk']
 handler.tags = ['stalk']
 handler.command = /^(stalkff|ffstalk)$/i
-
-// handler.register = true
 handler.limit = true
 
 export default handler

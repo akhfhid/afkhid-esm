@@ -16,9 +16,7 @@ let handler = async (m, { conn, text }) => {
         const { data } = await axios.get(`${APIs.ryzumi}/api/stalk/genshin?userId=${uid}`, {
             headers: { accept: 'application/json' }
         })
-
         if (!data || !data.meta) throw new Error('Data not found!')
-
         const meta = data.meta || {}
         const abyss = meta.spiralAbyss || {}
         const theater = meta.theater || {}
@@ -88,8 +86,6 @@ let handler = async (m, { conn, text }) => {
 Done~ (*/ω\\*) ✨`
 
         await conn.sendMessage(m.chat, { text: caption }, { quoted: m })
-
-        // Send JSON file for full details
         try {
             const jsonBuf = Buffer.from(JSON.stringify(data, null, 2))
             await conn.sendFile(

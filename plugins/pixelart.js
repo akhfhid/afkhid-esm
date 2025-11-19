@@ -5,7 +5,6 @@ class PixelArt {
         try {
             if (!buffer || !Buffer.isBuffer(buffer)) throw new Error('Image buffer is required');
             if (!['1:1', '3:2', '2:3'].includes(ratio)) throw new Error('Available ratios: 1:1, 3:2, 2:3');
-
             const { data: a } = await axios.post('https://pixelartgenerator.app/api/upload/presigned-url', {
                 filename: `${Date.now()}_rynn.jpg`,
                 contentType: 'image/jpeg',
@@ -90,7 +89,6 @@ class PixelArt {
     }
 }
 
-// Usage:
 const fs = require('fs');
 const p = new PixelArt();
 const resp = await p.img2pixel(fs.readFileSync('./image.jpg'));

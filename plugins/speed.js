@@ -8,27 +8,19 @@ let format = sizeFormatter({
   keepTrailingZeroes: false,
   render: (literal, symbol) => `${literal} ${symbol}B`,
 })
-
 let handler = async (m, { conn }) => {
-  // ----- Uptime -----
   let _muptime = process.uptime() * 1000
   let muptime = clockString(_muptime)
-
-  // ----- CPU -----
   const cpuList = _cpus()
   const cpu = cpuList[0]
   const avgSpeed = cpuList.reduce((a, c) => a + c.speed, 0) / cpuList.length
 
-  // ----- Ping -----
   let old = performance.now()
   await m.reply('⏳ Menghitung ping…')
   let neww = performance.now()
   let speed = neww - old
-
-  // ----- Memory -----
   const usedMem = totalmem() - freemem()
 
-  // ----- Build message -----
   let reply = `
 🔥 *SERVER STATUS* 🔥
 
