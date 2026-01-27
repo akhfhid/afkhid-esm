@@ -41,7 +41,6 @@ const handler = async (m, { conn, usedPrefix, text }) => {
           { upload: conn.waUploadToServer }
         );
 
-        // 2. Bangun card
         cards.push({
           header: {
             hasMediaAttachment: true,
@@ -69,7 +68,6 @@ const handler = async (m, { conn, usedPrefix, text }) => {
     if (!cards.length) {
       throw new Error("Tidak ada gambar yang bisa ditampilkan dalam carousel.");
     }
-
     const msg = generateWAMessageFromContent(
       m.chat,
       {
