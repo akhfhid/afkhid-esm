@@ -137,7 +137,7 @@ if (m.isInteractive) {
         return;
       }
     }
-
+let 10
     try {
       if (m.sender.endsWith("@broadcast") || m.sender.endsWith("@newsletter"))
         return;
